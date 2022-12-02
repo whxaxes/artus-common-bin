@@ -1,0 +1,53 @@
+{
+  "name": "artus-common-bin",
+  "version": "1.0.0",
+  "description": "demo of common-bin base on artus",
+  "keywords": [
+    "command-line-app",
+    "cli",
+    "commander"
+  ],
+  "author": "TZ <atian25@qq.com>",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "ts-mocha .",
+    "cov": "c8 npm test",
+    "ci": "npm run lint && npm run cov",
+    "tsc": "tsc -p tsconfig.release.json",
+    "prepublishOnly": "rm -rf dist && tnpm run tsc"
+  },
+  "dependencies": {
+    "@artus/core": "1.0.0",
+    "@artus/injection": "^0.5.1",
+    "@artus/pipeline": "^0.2.2",
+    "arg": "^5.0.2",
+    "reflect-metadata": "^0.1.13",
+    "tsconfig-paths": "^4.1.0",
+    "type-fest": "^3.3.0",
+    "yargs": "^17.5.1",
+    "yargs-parser": "^21.1.1"
+  },
+  "devDependencies": {
+    "@artus/tsconfig": "1",
+    "@types/mocha": "^9.1.1",
+    "@types/node": "^18.7.14",
+    "@types/yargs": "^17.0.12",
+    "c8": "^7.12.0",
+    "dirname-filename-esm": "^1.1.1",
+    "eslint": "^8.28.0",
+    "eslint-config-egg": "^12.1.0",
+    "mocha": "^10.0.0",
+    "ts-mocha": "^10.0.0",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.4.0",
+    "typescript": "^4.8.2"
+  },
+  "homepage": "https://github.com/atian25/artus-common-bin",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atian25/artus-common-bin.git"
+  },
+  "license": "MIT"
+}
