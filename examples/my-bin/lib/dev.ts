@@ -1,8 +1,9 @@
-import { DefineCommand, DefineOption, Command } from '../../../../src/index';
+import { DefineCommand, Option, Command } from '../../../src/index';
 
-interface DevOption {
+export interface DevOption {
   port?: number;
   inspect?: string;
+  nodeFlags?: string;
 }
 
 @DefineCommand({
@@ -11,7 +12,7 @@ interface DevOption {
   alias: [ 'd' ],
 })
 export class DevCommand extends Command {
-  @DefineOption<DevOption>({
+  @Option<DevOption>({
     port: {
       type: 'number',
       alias: 'p',
@@ -21,10 +22,16 @@ export class DevCommand extends Command {
     inspect: {
       type: 'boolean',
     },
+
+    nodeFlags: {
+      type: 'string',
+    },
   })
   options: DevOption;
 
   async run() {
-    console.info(this.options);
+    console.info(this.options.port);
+    console.info(this.options.inspect);
+    console.info(this.options.nodeFlags);
   }
 }

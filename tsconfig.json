@@ -5,6 +5,9 @@
     "sourceMap": false,
     "inlineSourceMap": true,
     "noUnusedParameters": false,
-    "noUnusedLocals":false
+    "noUnusedLocals":false,
+    "paths": {
+      "artus-common-bin": [ "./src" ]
+    }
   }
 }

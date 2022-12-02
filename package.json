@@ -24,7 +24,7 @@
     "@artus/pipeline": "^0.2.2",
     "arg": "^5.0.2",
     "reflect-metadata": "^0.1.13",
-    "tsconfig-paths": "^4.1.0",
+    "tsconfig-paths": "^4.1.1",
     "type-fest": "^3.3.0",
     "yargs": "^17.5.1",
     "yargs-parser": "^21.1.1"

@@ -6,15 +6,13 @@ export interface CommandProps {
   command: string;
   description?: string;
   alias?: string | string[];
-  parent?: typeof Command;
 }
 
 export interface OptionProps {
   type?: string;
-  description?: string;
   alias?: string | string[];
   default?: any;
-  required?: boolean;
+  description?: string;
 }
 
 export interface OptionMeta<T extends string = string> {
@@ -35,16 +33,27 @@ export function DefineCommand(meta: CommandProps) {
   };
 }
 
-export function DefineSubCommand(meta: RequireExactlyOne<CommandProps, 'parent'>) {
-  return DefineCommand(meta);
-}
-
-export function DefineOption<T extends object = object>(meta?: Record<keyof T, OptionProps>) {
+export function Option<T extends object = object>(
+  meta?: { [P in keyof T]?: OptionProps; },
+  option?: { override?: boolean; },
+) {
   return (target: any, key: string) => {
+    const ctor = target.constructor;
+
+    // merge meta of prototype
+    if (!option?.override) {
+      let proto = Object.getPrototypeOf(ctor);
+      while (proto && proto !== Command) {
+        const protoMeta = Reflect.getMetadata(MetadataEnum.OPTION, proto);
+        if (protoMeta) meta = Object.assign({}, protoMeta.meta, meta);
+        proto = Object.getPrototypeOf(proto);
+      }
+    }
+
     Reflect.defineMetadata(
       MetadataEnum.OPTION,
       { key, meta } satisfies OptionMeta,
-      target.constructor,
+      ctor,
     );
   };
 }

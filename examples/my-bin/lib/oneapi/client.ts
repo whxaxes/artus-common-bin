@@ -1,4 +1,4 @@
-import { DefineCommand, DefineOption, OptionProps } from '../../../../../src/index';
+import { DefineCommand, Option, OptionProps } from '../../../../src/index';
 
 @DefineCommand({
   command: 'oneapi client [appName]',
