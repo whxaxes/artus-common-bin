@@ -14,6 +14,6 @@ export class MainCommand extends Command {
   options: any;
 
   async run() {
-    console.info('default');
+    console.info('flags', this.options.flags);
   }
 }

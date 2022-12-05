@@ -35,7 +35,7 @@ export default class UsageLifecycle implements ApplicationLifecycle {
         const displayTexts = [];
         const command = cmdInfo.command;
 
-        if (command) {
+        if (command && !command.root) {
           const { optionKeys, text } = displayCommandUsage(command);
 
           displayTexts.push(`Usage: ${cmdInfo.bin} ${text}`);

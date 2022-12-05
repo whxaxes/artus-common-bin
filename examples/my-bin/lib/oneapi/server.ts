@@ -5,7 +5,10 @@ import { DefineCommand, Option, OptionProps } from 'artus-common-bin';
   description: 'Run the oneapi server',
 })
 export class OneapiServerCommand {
-  async run(args: string[]) {
-    console.info('> args:', args);
+  @Option()
+  options: any;
+
+  async run() {
+    console.info('oneapi server', this.options.appName);
   }
 }

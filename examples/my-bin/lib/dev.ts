@@ -23,6 +23,7 @@ export class DevCommand extends Command {
 
     inspect: {
       type: 'boolean',
+      default: false,
       description: 'Debug with node-inspector',
     },
 
@@ -33,9 +34,9 @@ export class DevCommand extends Command {
   options: DevOption;
 
   async run() {
-    console.info(this.options.port);
-    console.info(this.options.inspect);
-    console.info(this.options.nodeFlags);
-    console.info(this.options.baseDir);
+    console.info('port', this.options.port);
+    console.info('inspect', this.options.inspect);
+    console.info('nodeFlags', this.options.nodeFlags);
+    console.info('baseDir', this.options.baseDir);
   }
 }

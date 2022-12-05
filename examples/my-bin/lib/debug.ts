@@ -12,13 +12,17 @@ interface DebugOption extends DevOption {
 export class DebugCommand extends DevCommand {
   @Option<DebugOption>({
     flags: {
-      type: 'string',
+      type: 'number',
       alias: 'f',
+      default: 0,
     },
   })
   args: DebugOption;
 
   async run() {
-    console.info('> args:', this.args);
+    console.info('port', this.args.port);
+    console.info('inspect', this.args.inspect);
+    console.info('flags', this.args.flags);
+    console.info('baseDir', this.args.baseDir);
   }
 }
