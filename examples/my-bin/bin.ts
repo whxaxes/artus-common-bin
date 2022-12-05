@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { start } from '../../src/index';
+import '../common';
+import { start } from 'artus-common-bin';
 
 async function run() {
   await start({ baseDir: __dirname });

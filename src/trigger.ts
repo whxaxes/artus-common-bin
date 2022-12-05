@@ -1,41 +1,37 @@
 import { Trigger, Injectable, ScopeEnum, Inject, Container } from '@artus/core';
 import { Context } from '@artus/pipeline';
-import { Argv } from './proto/Argv';
-import { ParsedCommands, ParsedCommand } from './proto/ParsedCommands';
-
-export { Middleware } from '@artus/pipeline';
-
-export enum HookEventEnum {
-  INIT = 'init',
-  PRERUN = 'prerun',
-  POSTRUN = 'postrun',
-  ERROR = 'error',
-  END = 'end',
-}
-
-export type HookFunction = (opts?: Record<string, any>) => Promise<void>;
-
-export interface CommandInput {
-  commandClz: any;
-  argv: Record<string, any>;
-  env: Record<string, string>;
-  cwd: string;
-}
+import { CommandInfo, CommandInput } from './proto/CommandInfo';
 
 @Injectable({ scope: ScopeEnum.SINGLETON })
 export class CommandTrigger extends Trigger {
   @Inject()
   container: Container;
 
-  async run() {
+  async start() {
+    // core middleware
+    this.use(async (ctx: Context, next) => {
+      await next();
+
+      const cmdInfo = ctx.container.get(CommandInfo);
+      if (!cmdInfo.command) return;
+
+      const commandInstance = ctx.container.get(cmdInfo.command.clz);
+      Object.defineProperty(commandInstance, cmdInfo.command.propKey, { value: cmdInfo.args });
+
+      // trigger command
+      const result = await commandInstance.run();
+      ctx.output.data = { result };
+    });
+
     try {
       const ctx = await this.initContext();
-      const argv = ctx.container.get(Argv);
-      argv.init({
+
+      // set input data
+      ctx.input.params = {
         argv: process.argv.slice(2),
         env: { ...process.env },
         cwd: process.cwd(),
-      });
+      } satisfies CommandInput;
 
       await this.startPipeline(ctx);
     } catch (err) {
@@ -45,19 +41,10 @@ export class CommandTrigger extends Trigger {
 
   async init() {
     this.use(async (ctx: Context, next) => {
+      // init command info
+      const commandInfo = ctx.container.get(CommandInfo);
+      commandInfo.init(ctx.input.params as any);
       await next();
-
-      const parsedArgv = ctx.container.get(Argv);
-      const parsedCommands = this.container.get(ParsedCommands);
-      const result = parsedCommands.getCommand(parsedArgv.raw);
-      if (!result) return;
-
-      const commandInstance = ctx.container.get(result.command.clz);
-      Object.defineProperty(commandInstance, result.command.options.key, { value: result.args });
-      ctx.output.data = {
-        args: result.args,
-        result: await commandInstance.run(),
-      };
     });
   }
 }

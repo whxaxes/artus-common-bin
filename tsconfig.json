@@ -6,8 +6,10 @@
     "inlineSourceMap": true,
     "noUnusedParameters": false,
     "noUnusedLocals":false,
+    "resolveJsonModule": true,
     "paths": {
-      "artus-common-bin": [ "./src" ]
+      "artus-common-bin": [ "./src" ],
+      "usage-plugin": [ "./examples/usage-plugin" ]
     }
   }
 }

@@ -1,4 +1,4 @@
-import { DefineCommand, Option } from '../../../src/index';
+import { DefineCommand, Option } from 'artus-common-bin';
 import { DevCommand, DevOption } from './dev';
 
 interface DebugOption extends DevOption {

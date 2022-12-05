@@ -1,4 +1,4 @@
-import { DefineCommand, Option, OptionProps } from '../../../../src/index';
+import { DefineCommand, Option, OptionProps } from 'artus-common-bin';
 
 @DefineCommand({
   command: 'oneapi server [appName]',

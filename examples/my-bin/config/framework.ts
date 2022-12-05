@@ -1,5 +1,5 @@
 import path from 'path';
 
 export default {
-  path: path.resolve(__dirname, '../../../src'),
+  path: path.dirname(require.resolve('artus-common-bin')),
 };

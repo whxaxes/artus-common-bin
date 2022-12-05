@@ -1,5 +1,5 @@
 import { parseCommand, ParsedCommand as ParsedCommandStruct, Positional } from '../util/parse-command';
-import { Command, OptionMeta, CommandProps } from '../command';
+import { Command, CommandProps, OptionProps } from '../command';
 import { MetadataEnum } from '../constant';
 import parser from 'yargs-parser';
 import { Injectable, Container, Inject, ScopeEnum } from '@artus/core';
@@ -10,13 +10,16 @@ export class ParsedCommand implements ParsedCommandStruct {
   demanded: Positional[];
   optional: Positional[];
   description: string;
-  options: OptionMeta;
+  options: Record<string, OptionProps>;
+  propKey: string;
 
   constructor(public clz: typeof Command) {
     const props: CommandProps = Reflect.getMetadata(MetadataEnum.COMMAND, clz);
     const parsedCommand = parseCommand(props.command);
     this.cmd = parsedCommand.cmd;
-    this.options = Reflect.getMetadata(MetadataEnum.OPTION, clz) || {};
+    const { key, meta } = Reflect.getMetadata(MetadataEnum.OPTION, clz) || {};
+    this.options = meta;
+    this.propKey = key;
     this.demanded = parsedCommand.demanded;
     this.optional = parsedCommand.optional;
     this.description = props.description || '';
@@ -28,7 +31,7 @@ export class ParsedCommand implements ParsedCommandStruct {
   }
 }
 
-@Injectable({ scope: ScopeEnum.SINGLETON })
+@Injectable({ scope: ScopeEnum.EXECUTION })
 export class ParsedCommands {
   commands: ParsedCommand[];
 
@@ -38,7 +41,7 @@ export class ParsedCommands {
   }
 
   private checkDemanded(args: string[], pos: Positional[]) {
-    const result: Record<string, string> = {};
+    const result: Record<string, any> = {};
     const pass = pos.every((positional, index) => {
       const r = positional.cmd.includes(String(args[index]));
       if (r) positional.cmd.forEach(c => result[c] = args[index]);
@@ -48,7 +51,7 @@ export class ParsedCommands {
   }
 
   private checkOptional(args: string[], pos: Positional[]) {
-    const result: Record<string, string> = {};
+    const result: Record<string, any> = {};
     pos.forEach((positional, index) => {
       positional.cmd.forEach(c => result[c] = args[index]);
     });
@@ -56,7 +59,7 @@ export class ParsedCommands {
   }
 
   private _getCommand(argv: string[]) {
-    const argsObj: Record<string, string> = {};
+    const argsObj: Record<string, any> = {};
     for (let command of this.commands) {
       const [ firstCmd, ...extraArgs ] = argv;
 
@@ -81,12 +84,17 @@ export class ParsedCommands {
 
   getCommand(argv: string[]) {
     const result = this._getCommand(argv);
-    if (!result) return result;
+    if (!result) {
+      return {
+        command: undefined,
+        args: parser(argv),
+      };
+    }
 
     const { command, args } = result;
     const parserOption: parser.Options = {};
-    for (const key in command.options.meta) {
-      const opt = command.options.meta[key];
+    for (const key in command.options) {
+      const opt = command.options[key];
       if (opt.alias !== undefined) {
         parserOption.alias = parserOption.alias || {};
         parserOption.alias[key] = opt.alias;

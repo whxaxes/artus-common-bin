@@ -1,4 +1,4 @@
-import { DefineCommand, Option, Command } from '../../../src/index';
+import { DefineCommand, Option, Command } from 'artus-common-bin';
 
 export interface DevOption {
   port?: number;
@@ -17,10 +17,12 @@ export class DevCommand extends Command {
       type: 'number',
       alias: 'p',
       default: 3000,
+      description: 'Start A Server',
     },
 
     inspect: {
       type: 'boolean',
+      description: 'Debug with node-inspector',
     },
 
     nodeFlags: {
