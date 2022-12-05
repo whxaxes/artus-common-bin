@@ -1,27 +1,90 @@
-import { parseCommand, ParsedCommand as ParsedCommandStruct, Positional } from '../util/parse-command';
-import { Command, CommandProps, OptionProps } from '../command';
+import { Command, CommandMeta, OptionProps } from '../command';
 import { MetadataEnum } from '../constant';
 import parser from 'yargs-parser';
-import { Injectable, Container, Inject, ScopeEnum } from '@artus/core';
+import { ArtusInjectEnum, Injectable, Container, Inject, ScopeEnum } from '@artus/core';
+
+export interface ParsedCommandStruct {
+  cmd: string;
+  root: boolean;
+  demanded: Positional[];
+  optional: Positional[];
+}
+
+export interface Positional {
+  cmd: string[];
+  variadic: boolean;
+}
+
+export function parseCommand(cmd: string, binName: string) {
+  const extraSpacesStrippedCommand = cmd.replace(/\s{2,}/g, ' ');
+  const splitCommand = extraSpacesStrippedCommand.split(/\s+(?![^[]*]|[^<]*>)/);
+  const bregex = /\.*[\][<>]/g;
+  if (!splitCommand.length) throw new Error(`No command found in: ${cmd}`);
+
+  let firstCommand: string;
+  if (splitCommand[0] === binName) {
+    splitCommand.shift();
+  }
+
+  let root = false;
+  if (!splitCommand[0] || splitCommand[0].match(bregex)) {
+    root = true;
+    firstCommand = '';
+  } else {
+    firstCommand = splitCommand.shift();
+  }
+
+  const parsedCommand: ParsedCommandStruct = {
+    cmd: firstCommand.replace(bregex, ''),
+    root,
+    demanded: [],
+    optional: [],
+  };
+
+  splitCommand.forEach((cmd, i) => {
+    let variadic = false;
+    cmd = cmd.replace(/\s/g, '');
+    if (/\.+[\]>]/.test(cmd) && i === splitCommand.length - 1) variadic = true;
+    if (/^\[/.test(cmd)) {
+      parsedCommand.optional.push({
+        cmd: cmd.replace(bregex, '').split('|'),
+        variadic,
+      });
+    } else {
+      parsedCommand.demanded.push({
+        cmd: cmd.replace(bregex, '').split('|'),
+        variadic,
+      });
+    }
+  });
+  return parsedCommand;
+}
 
 export class ParsedCommand implements ParsedCommandStruct {
   cmd: string;
+  usage: string;
   alias: string[];
+  root: boolean;
   demanded: Positional[];
   optional: Positional[];
   description: string;
   options: Record<string, OptionProps>;
   propKey: string;
+  depth: number;
 
-  constructor(public clz: typeof Command) {
-    const props: CommandProps = Reflect.getMetadata(MetadataEnum.COMMAND, clz);
-    const parsedCommand = parseCommand(props.command);
+  constructor(public clz: typeof Command, binName: string) {
+    const props: CommandMeta = Reflect.getMetadata(MetadataEnum.COMMAND, clz);
+    const usage = props.usage;
+    const parsedCommand = parseCommand(props.usage, binName);
+    this.usage = usage;
+    this.root = parsedCommand.root;
     this.cmd = parsedCommand.cmd;
+    this.demanded = parsedCommand.demanded;
+    this.optional = parsedCommand.optional;
+    this.depth = (this.root ? 0 : 1) + this.demanded.length + this.optional.length;
     const { key, meta } = Reflect.getMetadata(MetadataEnum.OPTION, clz) || {};
     this.options = meta;
     this.propKey = key;
-    this.demanded = parsedCommand.demanded;
-    this.optional = parsedCommand.optional;
     this.description = props.description || '';
     this.alias = props.alias
       ? Array.isArray(props.alias)
@@ -33,11 +96,17 @@ export class ParsedCommand implements ParsedCommandStruct {
 
 @Injectable({ scope: ScopeEnum.EXECUTION })
 export class ParsedCommands {
+  #binName: string;
   commands: ParsedCommand[];
 
-  constructor(@Inject() container: Container) {
+  constructor(
+    @Inject() container: Container,
+    @Inject(ArtusInjectEnum.Config) config: any,
+  ) {
     const commandList = container.getInjectableByTag(MetadataEnum.COMMAND);
-    this.commands = commandList.map(clz => new ParsedCommand(clz));
+    this.#binName = config.bin;
+    this.commands = commandList.map(clz => new ParsedCommand(clz, this.#binName))
+      .sort((a, b) => b.depth - a.depth);
   }
 
   private checkDemanded(args: string[], pos: Positional[]) {
@@ -60,10 +129,12 @@ export class ParsedCommands {
 
   private _getCommand(argv: string[]) {
     const argsObj: Record<string, any> = {};
+    const binName = this.#binName;
     for (let command of this.commands) {
-      const [ firstCmd, ...extraArgs ] = argv;
+      let [ firstCmd, ...extraArgs ] = argv;
+      if (command.root) extraArgs = argv;
 
-      if (command.cmd === firstCmd || command.alias.includes(String(firstCmd))) {
+      if (command.root || command.cmd === firstCmd || command.alias.includes(String(firstCmd))) {
         if (command.demanded.length) {
           const checkDemanded = this.checkDemanded(extraArgs, command.demanded);
           if (!checkDemanded.pass) continue;

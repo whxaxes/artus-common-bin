@@ -4,10 +4,11 @@ export interface DevOption {
   port?: number;
   inspect?: string;
   nodeFlags?: string;
+  baseDir?: string;
 }
 
 @DefineCommand({
-  command: 'dev [baseDir]',
+  usage: 'my-bin dev [baseDir]',
   description: 'Run the development server',
   alias: [ 'd' ],
 })
@@ -35,5 +36,6 @@ export class DevCommand extends Command {
     console.info(this.options.port);
     console.info(this.options.inspect);
     console.info(this.options.nodeFlags);
+    console.info(this.options.baseDir);
   }
 }

@@ -38,7 +38,7 @@ export default class UsageLifecycle implements ApplicationLifecycle {
         if (command) {
           const { optionKeys, text } = displayCommandUsage(command);
 
-          displayTexts.push(`Usage: ${cmdInfo.name} ${text}`);
+          displayTexts.push(`Usage: ${cmdInfo.bin} ${text}`);
           displayTexts.push(commandLineUsage([
             {
               header: 'Options',
@@ -58,7 +58,7 @@ export default class UsageLifecycle implements ApplicationLifecycle {
             },
           ]));
         } else {
-          displayTexts.push(`Usage: ${cmdInfo.name} <command> [options]`);
+          displayTexts.push(`Usage: ${cmdInfo.bin} <command> [options]`);
           displayTexts.push(commandLineUsage([
             {
               header: 'Available Commands',

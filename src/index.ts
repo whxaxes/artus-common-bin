@@ -4,6 +4,7 @@ import { ArtusApplication, Scanner } from '@artus/core';
 export * from '@artus/core';
 export * from './command';
 export * from './trigger';
+
 export * from './proto/CommandInfo';
 export * from './proto/ParsedCommands';
 

@@ -21,14 +21,14 @@ export class CommandInfo<T extends Record<string, any> = Record<string, any>> {
   @Inject()
   private readonly parsedCommands: ParsedCommands;
 
-  name: string;
+  bin: string;
   env: Record<string, string>;
   cwd: string;
   args: T & CommandBaseArgs;
   command: ParsedCommand;
 
   init(options: CommandInput) {
-    this.name = this.app.config.name;
+    this.bin = this.app.config.bin;
     this.env = options.env;
     this.cwd = options.cwd;
     this.raw = options.argv;

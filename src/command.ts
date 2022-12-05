@@ -1,9 +1,8 @@
 import { addTag, Injectable, ScopeEnum } from '@artus/core';
 import { MetadataEnum } from './constant';
-import { RequireExactlyOne } from 'type-fest';
 
 export interface CommandProps {
-  command: string;
+  usage: string;
   description?: string;
   alias?: string | string[];
 }
@@ -20,12 +19,17 @@ export interface OptionMeta<T extends string = string> {
   meta: Record<T, OptionProps>;
 }
 
+export interface CommandMeta extends CommandProps {
+  // nothing
+}
+
 export abstract class Command {
   abstract run(...args: any[]): Promise<any>;
 }
 
-export function DefineCommand(meta: CommandProps) {
+export function DefineCommand(opt?: CommandProps) {
   return (target: any) => {
+    const meta: CommandMeta = { ...opt };
     Reflect.defineMetadata(MetadataEnum.COMMAND, meta, target);
     addTag(MetadataEnum.COMMAND, target);
     Injectable({ scope: ScopeEnum.EXECUTION })(target);
