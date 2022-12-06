@@ -1,7 +1,7 @@
 import { DefineCommand, Option, OptionProps } from 'artus-common-bin';
 
 @DefineCommand({
-  usage: 'oneapi server [appName]',
+  command: 'oneapi server [appName]',
   description: 'Run the oneapi server',
 })
 export class OneapiServerCommand {

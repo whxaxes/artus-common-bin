@@ -13,7 +13,7 @@ export interface ParsedCommandStruct {
   cmd: string;
   cmds: string[];
   isRoot: boolean;
-  usage: string;
+  command: string;
   demanded: Positional[];
   optional: Positional[];
 }
@@ -34,20 +34,20 @@ export function parseCommand(cmd: string, binName: string) {
     splitCommand.shift();
   }
 
-  let usage: string;
+  let command: string;
   let root = false;
   if (!splitCommand[0] || splitCommand[0].match(bregex)) {
     root = true;
-    usage = [ binName, ...splitCommand ].join(' ');
+    command = [ binName, ...splitCommand ].join(' ');
   } else {
-    usage = splitCommand.join(' ');
+    command = splitCommand.join(' ');
   }
 
   const parsedCommand: ParsedCommandStruct = {
     cmd: '',
     cmds: [ binName ],
     isRoot: root,
-    usage,
+    command,
     demanded: [],
     optional: [],
   };
@@ -83,7 +83,7 @@ export function parseCommand(cmd: string, binName: string) {
 export class ParsedCommand implements ParsedCommandStruct {
   cmd: string;
   cmds: string[];
-  usage: string;
+  command: string;
   alias: string[];
   demanded: Positional[];
   optional: Positional[];
@@ -94,7 +94,7 @@ export class ParsedCommand implements ParsedCommandStruct {
   parent: ParsedCommand;
 
   constructor(public clz: typeof Command, opt: ParsedCommandStruct & CommandMeta) {
-    this.usage = opt.usage;
+    this.command = opt.command;
     this.cmd = opt.cmd;
     this.cmds = opt.cmds;
     this.demanded = opt.demanded;
@@ -146,7 +146,7 @@ export class ParsedCommands {
     const parsedCommands = commandList
       .map(clz => {
         const props: CommandMeta = Reflect.getMetadata(MetadataEnum.COMMAND, clz);
-        const info = parseCommand(props.usage, this.#binName);
+        const info = parseCommand(props.command, this.#binName);
         const parsedCommand = new ParsedCommand(clz, { ...props, ...info });
         this.commands.set(info.cmds.join(' '), parsedCommand);
         return parsedCommand;

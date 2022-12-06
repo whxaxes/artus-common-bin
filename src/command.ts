@@ -2,7 +2,7 @@ import { addTag, Injectable, ScopeEnum } from '@artus/core';
 import { MetadataEnum } from './constant';
 
 export interface CommandProps {
-  usage: string;
+  command?: string;
   description?: string;
   alias?: string | string[];
 }

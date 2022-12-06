@@ -6,7 +6,7 @@ interface DebugOption extends DevOption {
 }
 
 @DefineCommand({
-  usage: 'debug [baseDir]',
+  command: 'debug [baseDir]',
   description: 'Run the development server at debug mode',
 })
 export class DebugCommand extends DevCommand {

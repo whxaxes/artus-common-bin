@@ -1,7 +1,7 @@
 import { DefineCommand, Option, Command } from 'artus-common-bin';
 
 @DefineCommand({
-  usage: 'simple-bin [baseDir]',
+  command: 'simple-bin [baseDir]',
 })
 export class MainCommand extends Command {
   @Option({

@@ -24,7 +24,7 @@ export async function interceptor(ctx: Context, next) {
       };
     });
 
-  displayTexts.push(`Usage: ${matched.usage.startsWith(cmdInfo.bin) ? '' : `${cmdInfo.bin} `}${matched.usage}`);
+  displayTexts.push(`Usage: ${matched.command.startsWith(cmdInfo.bin) ? '' : `${cmdInfo.bin} `}${matched.command}`);
   if (matched.description) {
     displayTexts.push('', matched.description);
   }
@@ -37,7 +37,7 @@ export async function interceptor(ctx: Context, next) {
       content: childCommands
         .filter(c => !c.isRoot && c.isRunable)
         .map(command => ({
-          name: command.usage,
+          name: command.command,
           summary: command.description,
         })),
     });
