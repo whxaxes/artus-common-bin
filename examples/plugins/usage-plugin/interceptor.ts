@@ -7,7 +7,7 @@ export async function interceptor(ctx: Context, next) {
   const { fuzzyMatched, matched, args } = cmdInfo.matchResult;
   if (!fuzzyMatched || !args.help) {
     if (!matched) {
-      console.error(`\n Command '${cmdInfo.bin} ${cmdInfo.raw.join(' ')}' not found, try '${fuzzyMatched?.cmds.join(' ') || cmdInfo.bin} --help' for more information.\n`);
+      console.error(`\n Command not found: '${cmdInfo.bin} ${cmdInfo.raw.join(' ')}', try '${fuzzyMatched?.cmds.join(' ') || cmdInfo.bin} --help' for more information.\n`);
       process.exit(1);
     }
 
