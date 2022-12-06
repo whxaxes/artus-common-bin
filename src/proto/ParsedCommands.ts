@@ -10,6 +10,7 @@ export interface MatchResult {
 }
 
 export interface ParsedCommandStruct {
+  uid: string;
   cmd: string;
   cmds: string[];
   command: string;
@@ -43,6 +44,7 @@ export function parseCommand(cmd: string, binName: string) {
   }
 
   const parsedCommand: ParsedCommandStruct = {
+    uid: '',
     cmd: '',
     cmds: [ binName ],
     command,
@@ -75,10 +77,12 @@ export function parseCommand(cmd: string, binName: string) {
 
   // last cmd is the command
   parsedCommand.cmd = parsedCommand.cmds[parsedCommand.cmds.length - 1];
+  parsedCommand.uid = parsedCommand.cmds.join(' ');
   return parsedCommand;
 }
 
 export class ParsedCommand implements ParsedCommandStruct {
+  uid: string;
   cmd: string;
   cmds: string[];
   command: string;
@@ -92,6 +96,7 @@ export class ParsedCommand implements ParsedCommandStruct {
   parent: ParsedCommand;
 
   constructor(public clz: typeof Command, opt: ParsedCommandStruct & CommandMeta) {
+    this.uid = opt.uid;
     this.command = opt.command;
     this.cmd = opt.cmd;
     this.cmds = opt.cmds;
@@ -141,14 +146,26 @@ export class ParsedCommands {
 
   private buildCommandTree(commandList: Array<typeof Command>) {
     this.commands = new Map();
-    const parsedCommands = commandList
-      .map(clz => {
-        const props: CommandMeta = Reflect.getMetadata(MetadataEnum.COMMAND, clz);
-        const info = parseCommand(props.command, this.#binName);
-        const parsedCommand = new ParsedCommand(clz, { ...props, ...info });
-        this.commands.set(info.cmds.join(' '), parsedCommand);
-        return parsedCommand;
-      });
+    const initCommandClz = clz => {
+      const props: CommandMeta = Reflect.getMetadata(MetadataEnum.COMMAND, clz);
+
+      let command = props.command;
+      if (props.parent) {
+        const parentParsedCommand = initCommandClz(props.parent);
+        command = parentParsedCommand.cmds.concat(command).join(' ');
+      }
+
+      const info = parseCommand(command, this.#binName);
+      if (this.commands.has(info.uid)) {
+        return this.commands.get(info.uid);
+      }
+
+      const parsedCommand = new ParsedCommand(clz, { ...props, ...info });
+      this.commands.set(info.uid, parsedCommand);
+      return parsedCommand;
+    };
+
+    const parsedCommands = commandList.map(initCommandClz);
 
     // handle parent and childs
     parsedCommands

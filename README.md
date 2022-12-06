@@ -6,13 +6,13 @@ POC of command line base on artusjs
 ## 默认 demo
 
 ```bash
-$ npx ts-node examples/my-bin/bin.ts -h
+$ npx ts-node examples/egg-bin/bin.ts -h
 ```
 
 ## 继承 demo
 
 ```bash
-$ npx ts-node examples/override-bin/bin.ts -h
+$ npx ts-node examples/chair-bin/bin.ts -h
 ```
 
 ## 简单 demo

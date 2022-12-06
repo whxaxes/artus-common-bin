@@ -5,6 +5,7 @@ export interface CommandProps {
   command?: string;
   description?: string;
   alias?: string | string[];
+  parent?: typeof Command;
 }
 
 export interface OptionProps {

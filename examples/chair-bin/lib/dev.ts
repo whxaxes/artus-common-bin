@@ -1,16 +1,24 @@
 import { DefineCommand, Option, Command } from 'artus-common-bin';
-import { DevCommand as BaseDevCommand, DevOption as BaseDevOption } from 'my-bin';
+import { DevCommand as BaseDevCommand, DevOption as BaseDevOption } from 'examples/egg-bin';
 
 export interface DevOption extends BaseDevOption {
   other?: string;
+  daemon?: boolean;
 }
 
-@DefineCommand()
+@DefineCommand({
+  description: 'Run the development server with chair-bin',
+})
 export class DevCommand extends BaseDevCommand {
   @Option<DevOption>({
     other: {
       type: 'string',
       alias: 'o',
+    },
+
+    daemon: {
+      type: 'boolean',
+      default: false,
     },
   })
   options: DevOption;
@@ -18,5 +26,6 @@ export class DevCommand extends BaseDevCommand {
   async run() {
     super.run();
     console.info('other', this.options.other);
+    console.info('daemon', this.options.daemon);
   }
 }
