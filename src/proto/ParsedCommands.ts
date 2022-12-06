@@ -208,19 +208,20 @@ export class ParsedCommands {
 
   private matchCommand(argv: string[]) {
     const result: MatchResult = {
+      fuzzyMatched: this.root,
       args: parser(argv),
     };
 
-    let uid = '';
     let index = 0;
-    const wholeArgv = [ this.#binName ].concat(result.args._);
+    const wholeArgv = result.args._;
     for (; index < wholeArgv.length; index++) {
       const el = wholeArgv[index];
-      uid += uid ? ` ${el}` : el;
+      const nextMatch = result.fuzzyMatched.childs.find(c => (
+        c.cmd === el || c.alias.includes(el)
+      ));
 
-      const try_matched = this.commands.get(uid);
-      if (try_matched) {
-        result.fuzzyMatched = try_matched;
+      if (nextMatch) {
+        result.fuzzyMatched = nextMatch;
         continue;
       }
 

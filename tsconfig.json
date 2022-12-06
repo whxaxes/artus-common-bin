@@ -11,8 +11,10 @@
     "paths": {
       "artus-common-bin": [ "./src" ],
       "egg-bin": [ "examples/egg-bin" ],
-      "version-plugin": [ "./examples/version-plugin" ],
-      "usage-plugin": [ "./examples/usage-plugin" ]
+      "codegen-plugin": [ "examples/plugins/codegen-plugin" ],
+      "codegen-extra": [ "examples/plugins/codegen-extra" ],
+      "version-plugin": [ "examples/plugins/version-plugin" ],
+      "usage-plugin": [ "examples/plugins/usage-plugin" ]
     }
   },
   "include": [

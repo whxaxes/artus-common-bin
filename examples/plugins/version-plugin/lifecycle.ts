@@ -1,4 +1,4 @@
-import '../common';
+import '../../common';
 import { Inject, ApplicationLifecycle, LifecycleHook, LifecycleHookUnit } from '@artus/core';
 import { CommandTrigger, ParsedCommands } from 'artus-common-bin';
 import { interceptor } from './interceptor';

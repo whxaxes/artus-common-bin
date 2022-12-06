@@ -7,7 +7,7 @@ export async function interceptor(ctx: Context, next) {
   const { fuzzyMatched, matched, args } = cmdInfo.matchResult;
   if (!fuzzyMatched || !args.help) {
     if (!matched) {
-      console.error(`\n Command '${cmdInfo.bin} ${cmdInfo.raw}' not found, try '${fuzzyMatched?.cmds.join(' ') || cmdInfo.bin} --help' for more information.\n`);
+      console.error(`\n Command '${cmdInfo.bin} ${cmdInfo.raw.join(' ')}' not found, try '${fuzzyMatched?.cmds.join(' ') || cmdInfo.bin} --help' for more information.\n`);
       process.exit(1);
     }
 
@@ -35,16 +35,19 @@ export async function interceptor(ctx: Context, next) {
   }
 
   const commandLineUsageList = [];
-  if (fuzzyMatched.childs.length) {
-    const childCommands = fuzzyMatched.isRoot ? Array.from(new Set(cmdInfo.commands.values())) : fuzzyMatched.childs;
+  const availableCommands = (
+    fuzzyMatched.isRoot
+      ? Array.from(new Set(cmdInfo.commands.values()))
+      : [ fuzzyMatched ].concat(fuzzyMatched.childs || [])
+  ).filter(c => !c.isRoot && c.isRunable);
+
+  if (availableCommands.length) {
     commandLineUsageList.push({
       header: 'Available Commands',
-      content: childCommands
-        .filter(c => !c.isRoot && c.isRunable)
-        .map(command => ({
-          name: command.command,
-          summary: command.description,
-        })),
+      content: availableCommands.map(command => ({
+        name: command.command,
+        summary: command.description,
+      })),
     });
   }
 
