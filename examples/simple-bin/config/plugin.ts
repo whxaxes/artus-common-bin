@@ -1,5 +1,5 @@
 export default {
-  usage: {
+  usagePlugin: {
     enable: true,
     package: 'usage-plugin',
   },

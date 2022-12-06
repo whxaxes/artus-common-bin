@@ -13,19 +13,19 @@ export default class UsageLifecycle implements ApplicationLifecycle {
 
   @LifecycleHook()
   async configDidLoad() {
-    const { commands } = this.commands;
-    commands.forEach(command => {
-      command.options = {
-        ...command.options,
+    const { root } = this.commands;
+    if (!root.options?.version) {
+      root.options = {
+        ...root.options,
 
-        help: {
+        version: {
           type: 'boolean',
-          description: 'Show Help',
-          alias: 'h',
+          alias: 'v',
+          description: 'Show Version',
         },
       };
-    });
 
-    this.trigger.use(interceptor);
+      this.trigger.use(interceptor);
+    }
   }
 }

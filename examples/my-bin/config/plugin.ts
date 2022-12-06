@@ -1,6 +1,11 @@
 export default {
-  usage: {
+  usagePlugin: {
     enable: true,
     package: 'usage-plugin',
+  },
+
+  versionPlugin: {
+    enable: true,
+    package: 'version-plugin',
   },
 };
