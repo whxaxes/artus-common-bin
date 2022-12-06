@@ -8,7 +8,7 @@ export interface DevOption {
 }
 
 @DefineCommand({
-  usage: 'my-bin dev [baseDir]',
+  usage: '$0 dev [baseDir]',
   description: 'Run the development server',
   alias: [ 'd' ],
 })

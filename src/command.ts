@@ -27,9 +27,33 @@ export abstract class Command {
   abstract run(...args: any[]): Promise<any>;
 }
 
-export function DefineCommand(opt?: CommandProps) {
+export class EmptyCommand extends Command {
+  async run() {
+    // nothing
+  }
+}
+
+function inheritMetadata(target: any) {
+
+}
+
+export function DefineCommand(
+  opt?: CommandProps,
+  option?: { override?: boolean; },
+) {
   return (target: any) => {
-    const meta: CommandMeta = { ...opt };
+    let meta: CommandMeta = { ...opt };
+
+    // merge meta of prototype
+    if (!option?.override) {
+      let proto = Object.getPrototypeOf(target);
+      while (proto && proto !== Command) {
+        const protoMeta = Reflect.getMetadata(MetadataEnum.COMMAND, proto);
+        if (protoMeta) meta = Object.assign({}, protoMeta, meta);
+        proto = Object.getPrototypeOf(proto);
+      }
+    }
+
     Reflect.defineMetadata(MetadataEnum.COMMAND, meta, target);
     addTag(MetadataEnum.COMMAND, target);
     Injectable({ scope: ScopeEnum.EXECUTION })(target);

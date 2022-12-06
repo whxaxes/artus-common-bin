@@ -1,11 +1,18 @@
-import { Command, CommandMeta, OptionProps } from '../command';
+import { Command, CommandMeta, OptionProps, EmptyCommand } from '../command';
 import { MetadataEnum } from '../constant';
 import parser from 'yargs-parser';
 import { ArtusInjectEnum, Injectable, Container, Inject, ScopeEnum } from '@artus/core';
 
+export interface MatchResult {
+  matched?: ParsedCommand;
+  fuzzyMatched?: ParsedCommand;
+  args: Record<string, any>;
+}
+
 export interface ParsedCommandStruct {
   cmd: string;
-  root: boolean;
+  cmds: string[];
+  isRoot: boolean;
   usage: string;
   demanded: Positional[];
   optional: Positional[];
@@ -22,24 +29,24 @@ export function parseCommand(cmd: string, binName: string) {
   const bregex = /\.*[\][<>]/g;
   if (!splitCommand.length) throw new Error(`No command found in: ${cmd}`);
 
-  let firstCommand: string;
-  if (splitCommand[0] === binName) {
+  // remove bin name
+  if ([ binName, '$0' ].includes(splitCommand[0])) {
     splitCommand.shift();
   }
 
+  let usage: string;
   let root = false;
-  let usage = cmd;
   if (!splitCommand[0] || splitCommand[0].match(bregex)) {
     root = true;
-    firstCommand = '';
+    usage = [ binName, ...splitCommand ].join(' ');
   } else {
     usage = splitCommand.join(' ');
-    firstCommand = splitCommand.shift();
   }
 
   const parsedCommand: ParsedCommandStruct = {
-    cmd: firstCommand.replace(bregex, ''),
-    root,
+    cmd: '',
+    cmds: [ binName ],
+    isRoot: root,
     usage,
     demanded: [],
     optional: [],
@@ -49,58 +56,80 @@ export function parseCommand(cmd: string, binName: string) {
     let variadic = false;
     cmd = cmd.replace(/\s/g, '');
     if (/\.+[\]>]/.test(cmd) && i === splitCommand.length - 1) variadic = true;
-    if (/^\[/.test(cmd)) {
-      parsedCommand.optional.push({
-        cmd: cmd.replace(bregex, '').split('|'),
-        variadic,
-      });
+
+    const result = cmd.match(/^(\[|\<)/);
+    if (result) {
+      if (result[1] === '[') {
+        parsedCommand.optional.push({
+          cmd: cmd.replace(bregex, '').split('|'),
+          variadic,
+        });
+      } else {
+        parsedCommand.demanded.push({
+          cmd: cmd.replace(bregex, '').split('|'),
+          variadic,
+        });
+      }
     } else {
-      parsedCommand.demanded.push({
-        cmd: cmd.replace(bregex, '').split('|'),
-        variadic,
-      });
+      parsedCommand.cmds.push(cmd);
     }
   });
+
+  // last cmd is the command
+  parsedCommand.cmd = parsedCommand.cmds[parsedCommand.cmds.length - 1];
   return parsedCommand;
 }
 
 export class ParsedCommand implements ParsedCommandStruct {
   cmd: string;
+  cmds: string[];
   usage: string;
   alias: string[];
-  root: boolean;
   demanded: Positional[];
   optional: Positional[];
   description: string;
   options: Record<string, OptionProps>;
   propKey: string;
-  depth: number;
+  childs: ParsedCommand[];
+  parent: ParsedCommand;
 
-  constructor(public clz: typeof Command, binName: string) {
-    const props: CommandMeta = Reflect.getMetadata(MetadataEnum.COMMAND, clz);
-    const parsedCommand = parseCommand(props.usage, binName);
-    this.usage = parsedCommand.usage;
-    this.root = parsedCommand.root;
-    this.cmd = parsedCommand.cmd;
-    this.demanded = parsedCommand.demanded;
-    this.optional = parsedCommand.optional;
-    this.depth = (this.root ? 0 : 1) + this.demanded.length + this.optional.length;
+  constructor(public clz: typeof Command, opt: ParsedCommandStruct & CommandMeta) {
+    this.usage = opt.usage;
+    this.cmd = opt.cmd;
+    this.cmds = opt.cmds;
+    this.demanded = opt.demanded;
+    this.optional = opt.optional;
     const { key, meta } = Reflect.getMetadata(MetadataEnum.OPTION, clz) || {};
     this.options = meta;
     this.propKey = key;
-    this.description = props.description || '';
-    this.alias = props.alias
-      ? Array.isArray(props.alias)
-        ? props.alias
-        : [ props.alias ]
+    this.childs = [];
+    this.parent = null;
+    this.description = opt.description || '';
+    this.alias = opt.alias
+      ? Array.isArray(opt.alias)
+        ? opt.alias
+        : [ opt.alias ]
       : [];
+  }
+
+  get isRoot() {
+    return !this.parent;
+  }
+
+  get isRunable() {
+    return this.clz !== EmptyCommand;
+  }
+
+  get depth() {
+    return this.cmds.length;
   }
 }
 
 @Injectable({ scope: ScopeEnum.EXECUTION })
 export class ParsedCommands {
   #binName: string;
-  commands: ParsedCommand[];
+  root: ParsedCommand;
+  commands: Map<string, ParsedCommand>;
 
   constructor(
     @Inject() container: Container,
@@ -108,9 +137,45 @@ export class ParsedCommands {
   ) {
     const commandList = container.getInjectableByTag(MetadataEnum.COMMAND);
     this.#binName = config.bin;
-    this.commands = commandList
-      .map(clz => new ParsedCommand(clz, this.#binName))
-      .sort((a, b) => b.depth - a.depth);
+    this.buildCommandTree(commandList);
+  }
+
+  private buildCommandTree(commandList: Array<typeof Command>) {
+    this.commands = new Map();
+    const parsedCommands = commandList
+      .map(clz => {
+        const props: CommandMeta = Reflect.getMetadata(MetadataEnum.COMMAND, clz);
+        const info = parseCommand(props.usage, this.#binName);
+        const parsedCommand = new ParsedCommand(clz, { ...props, ...info });
+        this.commands.set(info.cmds.join(' '), parsedCommand);
+        return parsedCommand;
+      });
+
+    // handle parent and childs
+    parsedCommands
+      .sort((a, b) => a.depth - b.depth)
+      .forEach(parsedCommand => {
+        let parent: ParsedCommand | undefined;
+        parsedCommand.cmds.forEach(cmd => {
+          const fullCmd = parent ? parent.cmds.concat(cmd).join(' ') : cmd;
+
+          let cacheParsedCommand = this.commands.get(fullCmd);
+          if (!cacheParsedCommand) {
+            // create empty node
+            cacheParsedCommand = new ParsedCommand(EmptyCommand, parseCommand(fullCmd, this.#binName));
+            this.commands.set(fullCmd, cacheParsedCommand);
+          }
+
+          if (!parent) {
+            this.root = parent = cacheParsedCommand;
+            return;
+          }
+
+          cacheParsedCommand.parent = parent;
+          parent.childs.push(cacheParsedCommand);
+          parent = cacheParsedCommand;
+        });
+      });
   }
 
   private checkDemanded(args: string[], pos: Positional[]) {
@@ -131,62 +196,78 @@ export class ParsedCommands {
     return { result };
   }
 
-  private _getCommand(argv: string[]) {
-    const argsObj: Record<string, any> = {};
-    const binName = this.#binName;
-    for (let command of this.commands) {
-      let [ firstCmd, ...extraArgs ] = argv;
-      if (command.root) extraArgs = argv;
+  private matchCommand(argv: string[]) {
+    const result: MatchResult = {
+      args: {},
+    };
 
-      if (command.root || command.cmd === firstCmd || command.alias.includes(String(firstCmd))) {
-        if (command.demanded.length) {
-          const checkDemanded = this.checkDemanded(extraArgs, command.demanded);
-          if (!checkDemanded.pass) continue;
-          Object.assign(argsObj, checkDemanded.result);
-        }
+    let uid = '';
+    let index = 0;
+    const wholeArgv = [ this.#binName ].concat(argv);
+    for (; index < wholeArgv.length; index++) {
+      const el = wholeArgv[index];
+      uid += uid ? ` ${el}` : el;
 
-        if (command.optional.length) {
-          const { result } = this.checkOptional(extraArgs.slice(command.demanded.length), command.optional);
-          Object.assign(argsObj, result);
-        }
-
-        return { command, args: argsObj };
+      const try_matched = this.commands.get(uid);
+      if (try_matched) {
+        result.fuzzyMatched = try_matched;
+        continue;
       }
+
+      break;
     }
 
-    return null;
+    const extraArgs = wholeArgv.slice(index);
+    if (result.fuzzyMatched) {
+      const fuzzyMatched = result.fuzzyMatched;
+      if (extraArgs.length) {
+        if (fuzzyMatched.demanded.length) {
+          const checkDemanded = this.checkDemanded(extraArgs, fuzzyMatched.demanded);
+          if (!checkDemanded.pass) {
+            // demanded not match
+            return result;
+          }
+
+          Object.assign(result.args, checkDemanded.result);
+        }
+
+        if (fuzzyMatched.optional.length) {
+          const info = this.checkOptional(extraArgs.slice(fuzzyMatched.demanded.length), fuzzyMatched.optional);
+          Object.assign(result.args, info.result);
+        }
+      }
+
+      result.matched = result.fuzzyMatched;
+      return result;
+    }
+
+    return result;
   }
 
   getCommand(argv: string[]) {
-    const result = this._getCommand(argv);
-    if (!result) {
-      return {
-        command: undefined,
-        args: parser(argv),
-      };
-    }
-
-    const { command, args } = result;
+    const result = this.matchCommand(argv);
     const parserOption: parser.Options = {};
-    for (const key in command.options) {
-      const opt = command.options[key];
-      if (opt.alias !== undefined) {
-        parserOption.alias = parserOption.alias || {};
-        parserOption.alias[key] = opt.alias;
-      }
+    if (result.matched) {
+      for (const key in result.matched.options) {
+        const opt = result.matched.options[key];
+        if (opt.alias !== undefined) {
+          parserOption.alias = parserOption.alias || {};
+          parserOption.alias[key] = opt.alias;
+        }
 
-      if (opt.type !== undefined) {
-        parserOption[opt.type] = parserOption[opt.type] || [];
-        parserOption[opt.type].push(key);
-      }
+        if (opt.type !== undefined) {
+          parserOption[opt.type] = parserOption[opt.type] || [];
+          parserOption[opt.type].push(key);
+        }
 
-      if (opt.default !== undefined) {
-        parserOption.default = parserOption.default || {};
-        parserOption.default[key] = opt.default;
+        if (opt.default !== undefined) {
+          parserOption.default = parserOption.default || {};
+          parserOption.default[key] = opt.default;
+        }
       }
     }
 
-    Object.assign(args, parser(argv, parserOption));
-    return { command, args };
+    Object.assign(result.args, parser(argv, parserOption));
+    return result;
   }
 }

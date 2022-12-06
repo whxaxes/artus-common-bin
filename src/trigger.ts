@@ -13,10 +13,11 @@ export class CommandTrigger extends Trigger {
       await next();
 
       const cmdInfo = ctx.container.get(CommandInfo);
-      if (!cmdInfo.command) return;
+      const { matched, args } = cmdInfo.matchResult;
+      if (!matched) return;
 
-      const commandInstance = ctx.container.get(cmdInfo.command.clz);
-      Object.defineProperty(commandInstance, cmdInfo.command.propKey, { value: cmdInfo.args });
+      const commandInstance = ctx.container.get(matched.clz);
+      Object.defineProperty(commandInstance, matched.propKey, { value: args });
 
       // trigger command
       const result = await commandInstance.run();

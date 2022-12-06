@@ -1,5 +1,5 @@
 import { ArtusApplication, ArtusInjectEnum, Inject, Injectable, ScopeEnum } from '@artus/core';
-import { ParsedCommand, ParsedCommands } from './ParsedCommands';
+import { ParsedCommand, ParsedCommands, MatchResult } from './ParsedCommands';
 
 export interface CommandInput {
   argv: string[];
@@ -25,7 +25,7 @@ export class CommandInfo<T extends Record<string, any> = Record<string, any>> {
   env: Record<string, string>;
   cwd: string;
   args: T & CommandBaseArgs;
-  command: ParsedCommand;
+  matchResult: MatchResult;
 
   init(options: CommandInput) {
     this.bin = this.app.config.bin;
@@ -49,11 +49,6 @@ export class CommandInfo<T extends Record<string, any> = Record<string, any>> {
   }
 
   parse() {
-    const result = this.parsedCommands.getCommand(this.raw);
-    if (result) {
-      this.command = result.command;
-      this.args = result.args as T & CommandBaseArgs;
-    }
-    return this;
+    this.matchResult = this.parsedCommands.getCommand(this.raw);
   }
 }

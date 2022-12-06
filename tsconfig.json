@@ -9,6 +9,7 @@
     "resolveJsonModule": true,
     "paths": {
       "artus-common-bin": [ "./src" ],
+      "my-bin": [ "./examples/my-bin" ],
       "usage-plugin": [ "./examples/usage-plugin" ]
     }
   }
