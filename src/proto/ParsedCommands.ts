@@ -128,7 +128,6 @@ export class ParsedCommand implements ParsedCommandStruct {
 @Injectable({ scope: ScopeEnum.EXECUTION })
 export class ParsedCommands {
   #binName: string;
-  root: ParsedCommand;
   commands: Map<string, ParsedCommand>;
 
   constructor(
@@ -167,7 +166,7 @@ export class ParsedCommands {
           }
 
           if (!parent) {
-            this.root = parent = cacheParsedCommand;
+            parent = cacheParsedCommand;
             return;
           }
 
