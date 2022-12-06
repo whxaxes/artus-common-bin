@@ -1,5 +1,6 @@
-import { Command, CommandMeta, OptionProps, EmptyCommand } from '../command';
+import { Command, EmptyCommand } from './Command';
 import { MetadataEnum } from '../constant';
+import { CommandMeta, OptionProps } from '../types';
 import parser from 'yargs-parser';
 import { ArtusInjectEnum, Injectable, Container, Inject, ScopeEnum } from '@artus/core';
 
@@ -38,7 +39,7 @@ export function parseCommand(cmd: string, binName: string) {
   const bregex = /\.*[\][<>]/g;
   if (!splitCommand.length) throw new Error(`No command found in: ${cmd}`);
 
-  // remove bin name
+  // first cmd is binName or $0, remove it anyway
   if ([ binName, '$0' ].includes(splitCommand[0])) {
     splitCommand.shift();
   }
@@ -64,22 +65,27 @@ export function parseCommand(cmd: string, binName: string) {
   splitCommand.forEach((cmd, i) => {
     let variadic = false;
     cmd = cmd.replace(/\s/g, '');
+
+    // <file...> or [file...]
     if (/\.+[\]>]/.test(cmd) && i === splitCommand.length - 1) variadic = true;
 
     const result = cmd.match(/^(\[|\<)/);
     if (result) {
       if (result[1] === '[') {
+        // [options]
         parsedCommand.optional.push({
           cmd: cmd.replace(bregex, '').split('|'),
           variadic,
         });
       } else {
+        // <options>
         parsedCommand.demanded.push({
           cmd: cmd.replace(bregex, '').split('|'),
           variadic,
         });
       }
     } else {
+      // command without [] or <>
       parsedCommand.cmds.push(cmd);
     }
   });

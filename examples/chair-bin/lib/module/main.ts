@@ -1,11 +1,10 @@
-import { DefineCommand } from 'artus-common-bin';
-import { DevCommand as BaseDevCommand, DevOption as BaseDevOption } from 'examples/egg-bin';
+import { DefineCommand, Command } from 'artus-common-bin';
 
 @DefineCommand({
   command: 'module',
   description: 'Module Commands',
 })
-export class ModuleMainCommand extends BaseDevCommand {
+export class ModuleMainCommand extends Command {
   async run() {
     console.info('module is run');
   }

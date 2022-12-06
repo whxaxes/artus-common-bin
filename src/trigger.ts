@@ -1,5 +1,6 @@
 import { Trigger, Injectable, ScopeEnum, Inject, Container } from '@artus/core';
 import { Context } from '@artus/pipeline';
+import compose from 'koa-compose';
 import { CommandInfo, CommandInput } from './proto/CommandInfo';
 
 @Injectable({ scope: ScopeEnum.SINGLETON })
