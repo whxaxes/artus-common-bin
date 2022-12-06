@@ -9,7 +9,7 @@ export interface DevOption extends BaseDevOption {
 @DefineCommand({
   description: 'Run the development server with chair-bin',
 })
-export class DevCommand extends BaseDevCommand {
+export class ChairDevCommand extends BaseDevCommand {
   @Option<DevOption>({
     other: {
       type: 'string',

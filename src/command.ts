@@ -34,10 +34,6 @@ export class EmptyCommand extends Command {
   }
 }
 
-function inheritMetadata(target: any) {
-
-}
-
 export function DefineCommand(
   opt?: CommandProps,
   option?: { override?: boolean; },

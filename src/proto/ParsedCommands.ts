@@ -146,6 +146,7 @@ export class ParsedCommands {
 
   private buildCommandTree(commandList: Array<typeof Command>) {
     this.commands = new Map();
+    const parsedCommandMap: Map<string, ParsedCommand> = new Map();
     const initCommandClz = clz => {
       const props: CommandMeta = Reflect.getMetadata(MetadataEnum.COMMAND, clz);
 
@@ -156,12 +157,13 @@ export class ParsedCommands {
       }
 
       const info = parseCommand(command, this.#binName);
-      if (this.commands.has(info.uid)) {
-        return this.commands.get(info.uid);
+      if (parsedCommandMap.has(clz)) {
+        return parsedCommandMap.get(clz);
       }
 
       const parsedCommand = new ParsedCommand(clz, { ...props, ...info });
       this.commands.set(info.uid, parsedCommand);
+      parsedCommandMap.set(clz, parsedCommand);
       return parsedCommand;
     };
 
