@@ -2,10 +2,12 @@ import 'reflect-metadata';
 import { ArtusApplication, Scanner } from '@artus/core';
 
 export * from '@artus/core';
-export * from './proto/Command';
+export { Context } from '@artus/pipeline';
 export * from './decorator';
 export * from './trigger';
+export * from './types';
 
+export * from './proto/Command';
 export * from './proto/CommandInfo';
 export * from './proto/ParsedCommands';
 

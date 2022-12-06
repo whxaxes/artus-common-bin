@@ -6,11 +6,8 @@ import inquirer from 'inquirer';
 })
 export class UserService {
   async getUserInfo() {
-    const result = await inquirer.prompt([{
-      name: 'user',
-      message: 'please input your name',
-    }]);
-
-    return result.user;
+    return {
+      nickname: 'foo',
+    };
   }
 }

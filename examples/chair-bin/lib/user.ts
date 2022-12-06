@@ -1,17 +1,34 @@
-import { Inject, DefineCommand, DefineOption, Command } from 'artus-common-bin';
+import { Inject, DefineCommand, DefineOption, Command, CommandInfo, Context, Middleware } from 'artus-common-bin';
 import { UserService } from '../service/user';
+import { AuthService } from '../service/auth';
 
 export interface UserOption {
-  user: string;
+  authCode: string;
+}
+
+async function authMiddleware(ctx: Context, next) {
+  const authService = ctx.container.get(AuthService);
+  const cmdInfo = ctx.container.get(CommandInfo);
+  const authCode = '123';
+  if (cmdInfo.args.authCode !== authCode) {
+    const inputCode = await authService.auth();
+    if (inputCode !== authCode) {
+      console.error('Error: invalid user!');
+      process.exit(1);
+    }
+  }
+
+  await next();
 }
 
 @DefineCommand({
   command: 'user',
   description: 'Show User Info',
 })
+@Middleware(authMiddleware)
 export class ChairUserCommand extends Command {
   @DefineOption<UserOption>({
-    user: {
+    authCode: {
       type: 'string',
       alias: 'u',
     },
@@ -22,12 +39,7 @@ export class ChairUserCommand extends Command {
   userService: UserService;
 
   async run() {
-    let user: string = this.options.user;
-
-    if (!user) {
-      user = await this.userService.getUserInfo();
-    }
-
-    console.info('user is', user);
+    const user = await this.userService.getUserInfo();
+    console.info('user is', user.nickname);
   }
 }

@@ -1,6 +1,7 @@
 import { Trigger, Injectable, ScopeEnum, Inject, Container } from '@artus/core';
 import { Context } from '@artus/pipeline';
 import compose from 'koa-compose';
+import { MetadataEnum } from './constant';
 import { CommandInfo, CommandInput } from './proto/CommandInfo';
 
 @Injectable({ scope: ScopeEnum.SINGLETON })
@@ -21,8 +22,15 @@ export class CommandTrigger extends Trigger {
       Object.defineProperty(commandInstance, matched.propKey, { value: args });
 
       // trigger command
-      const result = await commandInstance.run();
-      ctx.output.data = { result };
+      const middlewares = Reflect.getMetadata(MetadataEnum.MIDDLEWARE, matched.clz) || [];
+      await compose([
+        ...middlewares,
+
+        async () => {
+          const result = await commandInstance.run();
+          ctx.output.data = { result };
+        },
+      ])(ctx);
     });
 
     try {

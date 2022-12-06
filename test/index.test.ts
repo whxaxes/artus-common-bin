@@ -91,9 +91,9 @@ describe('test', () => {
       .expect('stdout', /oneapi client app/)
       .end();
 
-    await coffee.fork(tsNode, [ chairBin, 'user', '-u=whx' ])
+    await coffee.fork(tsNode, [ chairBin, 'user', '-u=123' ])
       .debug()
-      .expect('stdout', /user is whx/)
+      .expect('stdout', /user is foo/)
       .end();
   });
 
