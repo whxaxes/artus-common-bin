@@ -4,16 +4,21 @@ import { CommandInfo } from 'artus-common-bin';
 
 export async function interceptor(ctx: Context, next) {
   const cmdInfo = ctx.container.get(CommandInfo);
-  const { fuzzyMatched: matched, args } = cmdInfo.matchResult;
-  if (!matched || !args.help) {
+  const { fuzzyMatched, matched, args } = cmdInfo.matchResult;
+  if (!fuzzyMatched || !args.help) {
+    if (!matched) {
+      console.error(`\n Command '${cmdInfo.bin} ${cmdInfo.raw}' not found, try '${fuzzyMatched?.cmds.join(' ') || cmdInfo.bin} --help' for more information.\n`);
+      process.exit(1);
+    }
+
     return await next();
   }
 
   const displayTexts = [];
-  const optionKeys = matched.options ? Object.keys(matched.options) : [];
+  const optionKeys = fuzzyMatched.options ? Object.keys(fuzzyMatched.options) : [];
   const optionList = optionKeys
     .map(flag => {
-      const option = matched.options[flag];
+      const option = fuzzyMatched.options[flag];
       const showFlag = flag[0].toLowerCase() + flag.substring(1).replace(/[A-Z]/g, '-$&').toLowerCase();
       return {
         name: showFlag,
@@ -24,14 +29,14 @@ export async function interceptor(ctx: Context, next) {
       };
     });
 
-  displayTexts.push(`Usage: ${matched.command.startsWith(cmdInfo.bin) ? '' : `${cmdInfo.bin} `}${matched.command}`);
-  if (matched.description) {
-    displayTexts.push('', matched.description);
+  displayTexts.push(`Usage: ${fuzzyMatched.command.startsWith(cmdInfo.bin) ? '' : `${cmdInfo.bin} `}${fuzzyMatched.command}`);
+  if (fuzzyMatched.description) {
+    displayTexts.push('', fuzzyMatched.description);
   }
 
   const commandLineUsageList = [];
-  if (matched.childs.length) {
-    const childCommands = matched.isRoot ? Array.from(new Set(cmdInfo.commands.values())) : matched.childs;
+  if (fuzzyMatched.childs.length) {
+    const childCommands = fuzzyMatched.isRoot ? Array.from(new Set(cmdInfo.commands.values())) : fuzzyMatched.childs;
     commandLineUsageList.push({
       header: 'Available Commands',
       content: childCommands

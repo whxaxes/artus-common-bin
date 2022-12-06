@@ -12,7 +12,6 @@ export interface MatchResult {
 export interface ParsedCommandStruct {
   cmd: string;
   cmds: string[];
-  isRoot: boolean;
   command: string;
   demanded: Positional[];
   optional: Positional[];
@@ -46,7 +45,6 @@ export function parseCommand(cmd: string, binName: string) {
   const parsedCommand: ParsedCommandStruct = {
     cmd: '',
     cmds: [ binName ],
-    isRoot: root,
     command,
     demanded: [],
     optional: [],
@@ -179,22 +177,16 @@ export class ParsedCommands {
       });
   }
 
-  private checkDemanded(args: string[], pos: Positional[]) {
+  private checkPositional(args: string[], pos: Positional[]) {
+    let nextIndex = pos.length;
     const result: Record<string, any> = {};
     const pass = pos.every((positional, index) => {
-      const r = positional.cmd.includes(String(args[index]));
-      if (r) positional.cmd.forEach(c => result[c] = args[index]);
-      return r;
+      const r = positional.variadic ? args.slice(index) : args[index];
+      positional.cmd.forEach(c => result[c] = r);
+      if (positional.variadic) nextIndex = args.length;
+      return !!r;
     });
-    return { result, pass };
-  }
-
-  private checkOptional(args: string[], pos: Positional[]) {
-    const result: Record<string, any> = {};
-    pos.forEach((positional, index) => {
-      positional.cmd.forEach(c => result[c] = args[index]);
-    });
-    return { result };
+    return { result, pass, args: args.slice(nextIndex) };
   }
 
   private matchCommand(argv: string[]) {
@@ -218,24 +210,29 @@ export class ParsedCommands {
       break;
     }
 
-    const extraArgs = wholeArgv.slice(index);
+    let extraArgs = wholeArgv.slice(index);
     if (result.fuzzyMatched) {
       const fuzzyMatched = result.fuzzyMatched;
+      if (fuzzyMatched.demanded.length) {
+        const checkDemanded = this.checkPositional(extraArgs, fuzzyMatched.demanded);
+        if (!checkDemanded.pass) {
+          // demanded not match
+          return result;
+        }
+
+        Object.assign(result.args, checkDemanded.result);
+        extraArgs = checkDemanded.args;
+      }
+
+      if (fuzzyMatched.optional.length) {
+        const checkOptional = this.checkPositional(extraArgs, fuzzyMatched.optional);
+        Object.assign(result.args, checkOptional.result);
+        extraArgs = checkOptional.args;
+      }
+
+      // unknown args
       if (extraArgs.length) {
-        if (fuzzyMatched.demanded.length) {
-          const checkDemanded = this.checkDemanded(extraArgs, fuzzyMatched.demanded);
-          if (!checkDemanded.pass) {
-            // demanded not match
-            return result;
-          }
-
-          Object.assign(result.args, checkDemanded.result);
-        }
-
-        if (fuzzyMatched.optional.length) {
-          const info = this.checkOptional(extraArgs.slice(fuzzyMatched.demanded.length), fuzzyMatched.optional);
-          Object.assign(result.args, info.result);
-        }
+        return result;
       }
 
       result.matched = result.fuzzyMatched;
