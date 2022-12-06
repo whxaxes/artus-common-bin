@@ -29,3 +29,9 @@ $ npx ts-node examples/simple-bin/bin.ts -h
 - examples/version-plugin: `-v, --version`
 - examples/codegen-plugin `codegen 指令`
 - examples/codegen-extra `拓展 codegen 指令`
+
+## 单测
+
+```
+$ npm run test
+```
