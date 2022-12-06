@@ -90,6 +90,11 @@ describe('test', () => {
       .debug()
       .expect('stdout', /oneapi client app/)
       .end();
+
+    await coffee.fork(tsNode, [ chairBin, 'user', '-u=whx' ])
+      .debug()
+      .expect('stdout', /user is whx/)
+      .end();
   });
 
   it('simple-bin should work', async () => {

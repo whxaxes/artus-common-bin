@@ -1,4 +1,4 @@
-import { DefineCommand, Option } from 'artus-common-bin';
+import { DefineCommand, DefineOption } from 'artus-common-bin';
 import { DevCommand, DevOption } from './dev';
 
 interface DebugOption extends DevOption {
@@ -10,7 +10,7 @@ interface DebugOption extends DevOption {
   description: 'Run the development server at debug mode',
 })
 export class DebugCommand extends DevCommand {
-  @Option<DebugOption>({
+  @DefineOption<DebugOption>({
     flags: {
       type: 'number',
       alias: 'f',

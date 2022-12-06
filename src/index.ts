@@ -9,6 +9,7 @@ export * from './proto/CommandInfo';
 export * from './proto/ParsedCommands';
 
 export interface ApplicationOptions {
+  framework?: { package?: string; path?: string };
   baseDir?: string;
 }
 
@@ -33,6 +34,7 @@ export async function start(options ?: ApplicationOptions) {
     needWriteFile: false,
     configDir: 'config',
     extensions: [ '.ts' ],
+    framework: options.framework || { path: __dirname },
   });
 
   const manifest = await scanner.scan(baseDir);

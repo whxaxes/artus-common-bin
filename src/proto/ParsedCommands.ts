@@ -4,8 +4,17 @@ import parser from 'yargs-parser';
 import { ArtusInjectEnum, Injectable, Container, Inject, ScopeEnum } from '@artus/core';
 
 export interface MatchResult {
+  /**
+   * total matched command
+   */
   matched?: ParsedCommand;
+  /**
+   * fuzzy matched command
+   */
   fuzzyMatched?: ParsedCommand;
+  /**
+   * parsed args by argv
+   */
   args: Record<string, any>;
 }
 

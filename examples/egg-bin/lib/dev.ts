@@ -1,4 +1,4 @@
-import { DefineCommand, Option, Command } from 'artus-common-bin';
+import { DefineCommand, DefineOption, Command } from 'artus-common-bin';
 
 export interface DevOption {
   port?: number;
@@ -13,7 +13,7 @@ export interface DevOption {
   alias: [ 'd' ],
 })
 export class DevCommand extends Command {
-  @Option<DevOption>({
+  @DefineOption<DevOption>({
     port: {
       type: 'number',
       alias: 'p',

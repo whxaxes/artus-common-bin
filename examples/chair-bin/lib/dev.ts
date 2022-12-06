@@ -1,4 +1,4 @@
-import { DefineCommand, Option, Command } from 'artus-common-bin';
+import { DefineCommand, DefineOption, Command } from 'artus-common-bin';
 import { DevCommand as BaseDevCommand, DevOption as BaseDevOption } from 'examples/egg-bin';
 
 export interface DevOption extends BaseDevOption {
@@ -10,7 +10,7 @@ export interface DevOption extends BaseDevOption {
   description: 'Run the development server with chair-bin',
 })
 export class ChairDevCommand extends BaseDevCommand {
-  @Option<DevOption>({
+  @DefineOption<DevOption>({
     other: {
       type: 'string',
       alias: 'o',

@@ -58,7 +58,7 @@ export function DefineCommand(
   };
 }
 
-export function Option<T extends object = object>(
+export function DefineOption<T extends object = object>(
   meta?: { [P in keyof T]?: OptionProps; },
   option?: { override?: boolean; },
 ) {

@@ -1,4 +1,4 @@
-import { DefineCommand, Option, Command } from 'artus-common-bin';
+import { DefineCommand, DefineOption, Command } from 'artus-common-bin';
 
 export interface TestOption {
   baseDir: string;
@@ -11,7 +11,7 @@ export interface TestOption {
   alias: [ 't' ],
 })
 export class TestCommand extends Command {
-  @Option()
+  @DefineOption()
   options: TestOption;
 
   async run() {

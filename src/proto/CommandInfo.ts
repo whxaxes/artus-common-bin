@@ -25,6 +25,10 @@ export class CommandInfo<T extends Record<string, any> = Record<string, any>> {
   env: Record<string, string>;
   cwd: string;
   args: T & CommandBaseArgs;
+
+  /**
+   * matched Command info
+   */
   matchResult: MatchResult;
 
   init(options: CommandInput) {
