@@ -7,11 +7,17 @@
     "noUnusedParameters": false,
     "noUnusedLocals":false,
     "resolveJsonModule": true,
+    "outDir": "dist",
     "paths": {
       "artus-common-bin": [ "./src" ],
       "my-bin": [ "./examples/my-bin" ],
       "version-plugin": [ "./examples/version-plugin" ],
       "usage-plugin": [ "./examples/usage-plugin" ]
     }
-  }
+  },
+  "include": [
+    "src/**/*.ts",
+    "examples/**/*.ts",
+    "examples/**/*.json"
+  ]
 }
