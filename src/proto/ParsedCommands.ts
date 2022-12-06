@@ -6,6 +6,7 @@ import { ArtusInjectEnum, Injectable, Container, Inject, ScopeEnum } from '@artu
 export interface ParsedCommandStruct {
   cmd: string;
   root: boolean;
+  usage: string;
   demanded: Positional[];
   optional: Positional[];
 }
@@ -27,16 +28,19 @@ export function parseCommand(cmd: string, binName: string) {
   }
 
   let root = false;
+  let usage = cmd;
   if (!splitCommand[0] || splitCommand[0].match(bregex)) {
     root = true;
     firstCommand = '';
   } else {
+    usage = splitCommand.join(' ');
     firstCommand = splitCommand.shift();
   }
 
   const parsedCommand: ParsedCommandStruct = {
     cmd: firstCommand.replace(bregex, ''),
     root,
+    usage,
     demanded: [],
     optional: [],
   };
@@ -74,9 +78,8 @@ export class ParsedCommand implements ParsedCommandStruct {
 
   constructor(public clz: typeof Command, binName: string) {
     const props: CommandMeta = Reflect.getMetadata(MetadataEnum.COMMAND, clz);
-    const usage = props.usage;
     const parsedCommand = parseCommand(props.usage, binName);
-    this.usage = usage;
+    this.usage = parsedCommand.usage;
     this.root = parsedCommand.root;
     this.cmd = parsedCommand.cmd;
     this.demanded = parsedCommand.demanded;
@@ -105,7 +108,8 @@ export class ParsedCommands {
   ) {
     const commandList = container.getInjectableByTag(MetadataEnum.COMMAND);
     this.#binName = config.bin;
-    this.commands = commandList.map(clz => new ParsedCommand(clz, this.#binName))
+    this.commands = commandList
+      .map(clz => new ParsedCommand(clz, this.#binName))
       .sort((a, b) => b.depth - a.depth);
   }
 
