@@ -197,12 +197,12 @@ export class ParsedCommands {
 
   private matchCommand(argv: string[]) {
     const result: MatchResult = {
-      args: {},
+      args: parser(argv),
     };
 
     let uid = '';
     let index = 0;
-    const wholeArgv = [ this.#binName ].concat(argv);
+    const wholeArgv = [ this.#binName ].concat(result.args._);
     for (; index < wholeArgv.length; index++) {
       const el = wholeArgv[index];
       uid += uid ? ` ${el}` : el;
@@ -245,8 +245,8 @@ export class ParsedCommands {
 
   getCommand(argv: string[]) {
     const result = this.matchCommand(argv);
-    const parserOption: parser.Options = {};
     if (result.matched) {
+      const parserOption: parser.Options = {};
       for (const key in result.matched.options) {
         const opt = result.matched.options[key];
         if (opt.alias !== undefined) {
@@ -264,9 +264,11 @@ export class ParsedCommands {
           parserOption.default[key] = opt.default;
         }
       }
+
+      // parse again with parserOption
+      Object.assign(result.args, parser(argv, parserOption));
     }
 
-    Object.assign(result.args, parser(argv, parserOption));
     return result;
   }
 }
