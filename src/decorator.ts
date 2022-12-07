@@ -99,6 +99,8 @@ export function Middleware(
 
     existsFns = existsFns || [];
 
+    // Default orders:
+    //
     // In class inheritance:
     //              command1  <-extend-  command2
     // trigger --> middleware1   -->   middleware2 --> middleware3  --> run
