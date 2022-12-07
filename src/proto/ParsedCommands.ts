@@ -3,6 +3,8 @@ import { MetadataEnum } from '../constant';
 import { CommandMeta, OptionProps } from '../types';
 import parser from 'yargs-parser';
 import Debug from 'debug';
+import { format } from 'node:util';
+import { isInheritFrom } from '../utils';
 import { ArtusInjectEnum, Injectable, Container, Inject, ScopeEnum } from '@artus/core';
 const debug = Debug('artus-common-bin#ParsedCommands');
 
@@ -122,6 +124,7 @@ export class ParsedCommand implements ParsedCommandStruct {
   cmds: string[];
   command: string;
   alias: string[];
+  override?: boolean;
   demanded: Positional[];
   optional: Positional[];
   description: string;
@@ -137,6 +140,7 @@ export class ParsedCommand implements ParsedCommandStruct {
     this.cmds = opt.cmds;
     this.demanded = opt.demanded;
     this.optional = opt.optional;
+    this.override = opt.override;
     const { key, meta } = Reflect.getMetadata(MetadataEnum.OPTION, clz) || {};
     this.options = meta;
     this.optionsKey = key;
@@ -201,7 +205,14 @@ export class ParsedCommands {
       const parsedCommand = new ParsedCommand(clz, { ...props, ...info });
       if (this.commands.has(info.uid)) {
         const existsParsedCommand = this.commands.get(info.uid);
-        debug('Command \'%s\' provide by %s is overrided by %s', existsParsedCommand.command, existsParsedCommand.clz.name, parsedCommand.clz.name);
+
+        // command override can only allow in class inheritance or options.override is true
+        const errorInfo = format('Command \'%s\' provide by %s is overrided by %s', existsParsedCommand.command, existsParsedCommand.clz.name, parsedCommand.clz.name);
+        if (!parsedCommand.override && !isInheritFrom(parsedCommand.clz, existsParsedCommand.clz)) {
+          throw new Error(errorInfo);
+        }
+
+        debug(errorInfo);
       }
 
       this.commands.set(info.uid, parsedCommand);

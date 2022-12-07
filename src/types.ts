@@ -4,6 +4,7 @@ export interface CommandProps {
   command?: string;
   description?: string;
   alias?: string | string[];
+  override?: boolean;
   parent?: typeof Command;
 }
 

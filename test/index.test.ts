@@ -6,6 +6,7 @@ describe('test', () => {
   const eggBin = path.resolve(__dirname, '../examples/egg-bin/bin.ts');
   const chairBin = path.resolve(__dirname, '../examples/chair-bin/bin.ts');
   const simpleBin = path.resolve(__dirname, '../examples/simple-bin/bin.ts');
+  const overrideBin = path.resolve(__dirname, '../examples/override/bin.ts');
 
   it('egg-bin should work', async () => {
     await coffee.fork(tsNode, [ eggBin, '--help' ])
@@ -130,6 +131,13 @@ describe('test', () => {
     await coffee.fork(tsNode, [ simpleBin, '--flags', '123' ])
       .debug()
       .expect('stdout', /flags 123/)
+      .end();
+  });
+
+  it('override-bin should work', async () => {
+    await coffee.fork(tsNode, [ overrideBin, 'dev' ])
+      .debug()
+      .expect('stdout', /extractly override/)
       .end();
   });
 });
