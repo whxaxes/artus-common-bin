@@ -23,6 +23,14 @@ $ npx ts-node examples/chair-bin/bin.ts -h
 $ npx ts-node examples/simple-bin/bin.ts -h
 ```
 
+## 指令覆盖 demo
+
+用于验证指令覆盖
+
+```bash
+$ npx ts-node examples/override/bin.ts -h
+```
+
 ## 插件 demo
 
 - examples/usage-plugin: `-h, --help`
