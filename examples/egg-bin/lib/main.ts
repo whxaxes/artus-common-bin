@@ -1,8 +1,6 @@
 import { DefineCommand, Command } from 'artus-common-bin';
 
-@DefineCommand({
-  command: '$0',
-})
+@DefineCommand()
 export class MainCommand extends Command {
   async run() {
     console.info('main');
