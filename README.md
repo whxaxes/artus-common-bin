@@ -35,3 +35,4 @@ $ npx ts-node examples/simple-bin/bin.ts -h
 ```
 $ npm run test
 ```
+
