@@ -29,12 +29,13 @@ export function DefineCommand(
     addTag(MetadataEnum.COMMAND, target);
     Injectable({ scope: ScopeEnum.EXECUTION })(target);
 
-    // inject ctx to proto, wrap run method with middleware logic
+    // inject ctx to proto
     Inject(Context)(target, CONTEXT_SYMBOL);
     const runMethod = target.prototype.run;
     Object.defineProperty(target.prototype, 'run', {
       async value(...args: any[]) {
         const ctx: Context = this[CONTEXT_SYMBOL];
+        // compose with middlewares
         const middlewares = Reflect.getMetadata(MetadataEnum.MIDDLEWARE, target) || [];
         return await compose([
           ...middlewares,
