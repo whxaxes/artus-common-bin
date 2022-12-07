@@ -1,24 +1,22 @@
-import { Trigger, Injectable, ScopeEnum, Inject, Container } from '@artus/core';
+import { Trigger, Injectable, ScopeEnum } from '@artus/core';
 import { Context } from '@artus/pipeline';
 import Debug from 'debug';
-import compose from 'koa-compose';
-import { MetadataEnum } from './constant';
 import { EXCUTION_SYMBOL } from './decorator';
 import { CommandContext, CommandInput } from './proto/CommandInfo';
 const debug = Debug('artus-common-bin#trigger');
 
 @Injectable({ scope: ScopeEnum.SINGLETON })
 export class CommandTrigger extends Trigger {
-  @Inject()
-  container: Container;
-
   async start() {
     // core middleware
     this.use(async (ctx: Context, next) => {
       await next();
 
       const { matched } = ctx.container.get(CommandContext);
-      if (!matched) return;
+      if (!matched) {
+        debug('Can not match any command, exit...');
+        return;
+      }
 
       const commandInstance = ctx.container.get(matched.clz);
       debug('Run command %s', matched.clz.name);
@@ -48,8 +46,8 @@ export class CommandTrigger extends Trigger {
   async init() {
     this.use(async (ctx: Context, next) => {
       // init command info
-      const commandInfo = ctx.container.get(CommandContext);
-      commandInfo.init(ctx.input.params as any);
+      const cmdCtx = ctx.container.get(CommandContext);
+      cmdCtx.init(ctx.input.params as CommandInput);
       await next();
     });
   }
