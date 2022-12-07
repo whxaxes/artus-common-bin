@@ -100,10 +100,15 @@ export function parseCommand(cmd: string, binName: string) {
   return parsedCommand;
 }
 
+/** Wrapper of command */
 export class ParsedCommand implements ParsedCommandStruct {
+  /** cmds.join(' ') */
   uid: string;
+  /** the last element of cmds, 'bin dev' is 'dev', 'bin module test [baseDir]' is 'test' */
   cmd: string;
+  /** convert command to array, like [ 'bin', 'dev' ] */
   cmds: string[];
+  /** user defined in options but remove bin name */
   command: string;
   alias: string[];
   override?: boolean;
@@ -152,6 +157,8 @@ export class ParsedCommand implements ParsedCommandStruct {
 @Injectable({ scope: ScopeEnum.SINGLETON })
 export class ParsedCommands {
   private binName: string;
+
+  /** cache the instance of parsedCommand */
   private parsedCommandMap: Map<typeof Command, ParsedCommand>;
 
   /** root of command tree */
@@ -185,6 +192,7 @@ export class ParsedCommands {
 
       const info = parseCommand(command, this.binName);
       if (this.parsedCommandMap.has(clz)) {
+        // avoid to create parsedCommand again.
         return this.parsedCommandMap.get(clz);
       }
 
