@@ -8,7 +8,7 @@ export interface CommandInput {
 }
 
 /**
- * Command Context
+ * Command Context, store `argv`/`env`/`cwd`/`match result` ...
  */
 @Injectable({ scope: ScopeEnum.EXECUTION })
 export class CommandContext {
