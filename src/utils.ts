@@ -26,3 +26,7 @@ export function checkCommandCompatible(command: ParsedCommand, compareCommand: P
 
   return true;
 }
+
+export function isNil(v) {
+  return v === undefined || v === null;
+}

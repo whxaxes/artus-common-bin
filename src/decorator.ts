@@ -1,7 +1,7 @@
 import { addTag, Injectable, ScopeEnum, Inject } from '@artus/core';
 import { MetadataEnum } from './constant';
 import { ParsedCommands } from './proto/ParsedCommands';
-import { CommandContext } from './proto/CommandInfo';
+import { CommandContext } from './proto/CommandContext';
 import compose from 'koa-compose';
 import { checkCommandCompatible } from './utils';
 import { Context, Middleware as MiddlewareFunction } from '@artus/pipeline';

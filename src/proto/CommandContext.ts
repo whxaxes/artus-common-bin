@@ -64,6 +64,10 @@ export class CommandContext {
     return this.matchResult.matched;
   }
 
+  get error() {
+    return this.matchResult.error;
+  }
+
   parse() {
     this.matchResult = this.parsedCommands.matchCommand(this.raw);
   }

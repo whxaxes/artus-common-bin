@@ -12,6 +12,7 @@ export interface OptionProps {
   type?: string;
   alias?: string | string[];
   default?: any;
+  required?: boolean;
   description?: string;
 }
 

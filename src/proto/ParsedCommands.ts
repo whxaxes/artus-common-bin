@@ -4,7 +4,7 @@ import { CommandMeta, OptionProps } from '../types';
 import parser from 'yargs-parser';
 import Debug from 'debug';
 import { format } from 'node:util';
-import { isInheritFrom } from '../utils';
+import { isInheritFrom, isNil } from '../utils';
 import { ArtusInjectEnum, Injectable, Container, Inject, ScopeEnum } from '@artus/core';
 const debug = Debug('artus-common-bin#ParsedCommands');
 
@@ -17,6 +17,10 @@ export interface MatchResult {
    * fuzzy matched command
    */
   fuzzyMatched?: ParsedCommand;
+  /**
+   * match error
+   */
+  error?: Error;
   /**
    * parsed args by argv
    */
@@ -250,15 +254,25 @@ export class ParsedCommands {
     let nextIndex = pos.length;
     const result: Record<string, any> = {};
     const pass = pos.every((positional, index) => {
-      // `bin <files...>` match `bin file1 file2 file3` => { files: [ "file1", "file2", "file3" ] }
+      // `bin <files..>` match `bin file1 file2 file3` => { files: [ "file1", "file2", "file3" ] }
       // `bin <file> [baseDir]` match `bin file1 ./` => { file: "file1", baseDir: "./" }
-      const r = positional.variadic ? args.slice(index) : args[index];
+      let r;
+      if (positional.variadic) {
+        r = args.slice(index);
+        nextIndex = args.length; // variadic means the last
+      } else {
+        r = args[index];
+      }
+
       positional.cmd.forEach(c => result[c] = r);
-      // variadic means the last
-      if (positional.variadic) nextIndex = args.length;
       return !!r;
     });
-    return { result, pass, args: args.slice(nextIndex) };
+
+    return {
+      result,
+      pass,
+      args: args.slice(nextIndex),
+    };
   }
 
   /** match command by argv */
@@ -299,6 +313,7 @@ export class ParsedCommands {
         if (!checkDemanded.pass) {
           // demanded not match
           debug('Demaned is not match with %s', extraArgs);
+          result.error = new Error('Not enough arguments');
           return result;
         }
 
@@ -315,7 +330,8 @@ export class ParsedCommands {
 
       // unknown args
       if (extraArgs.length) {
-        debug('Unknown args %s', extraArgs);
+        debug('Unknown arguments %s', extraArgs);
+        result.error = new Error(format('Unknown arguments %s', extraArgs));
         return result;
       }
 
@@ -326,15 +342,18 @@ export class ParsedCommands {
       return result;
     }
 
+    result.error = new Error('Command not found');
     return result;
   }
 
   /** parse argv with yargs-parser */
   parseArgs(argv: string[], parseCommand?: ParsedCommand) {
+    const requiredOptions: string[] = [];
     const parserOption: parser.Options = {};
     if (parseCommand) {
       for (const key in parseCommand.options) {
         const opt = parseCommand.options[key];
+        if (opt.required) requiredOptions.push(key);
         if (opt.alias !== undefined) {
           parserOption.alias = parserOption.alias || {};
           parserOption.alias[key] = opt.alias;
@@ -351,15 +370,26 @@ export class ParsedCommands {
         }
       }
     }
-    return parser(argv, parserOption);
+
+    const result = parser(argv, parserOption);
+    const requiredNilOptions = requiredOptions.filter(k => isNil(result[k]));
+    if (requiredNilOptions.length) {
+      throw new Error(format('Required options: %s', requiredNilOptions.join(', ')));
+    }
+
+    return result;
   }
 
   /** match command by argv */
   matchCommand(argv: string[]) {
     const result = this._matchCommand(argv);
     if (result.matched) {
-      // parse again with parserOption
-      Object.assign(result.args, this.parseArgs(argv, result.matched));
+      try {
+        // parse again with parserOption
+        Object.assign(result.args, this.parseArgs(argv, result.matched));
+      } catch (e) {
+        result.error = e;
+      }
     }
 
     return result;

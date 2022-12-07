@@ -2,7 +2,7 @@ import { Trigger, Injectable, ScopeEnum } from '@artus/core';
 import { Context } from '@artus/pipeline';
 import Debug from 'debug';
 import { EXCUTION_SYMBOL } from './decorator';
-import { CommandContext, CommandInput } from './proto/CommandInfo';
+import { CommandContext, CommandInput } from './proto/CommandContext';
 const debug = Debug('artus-common-bin#trigger');
 
 @Injectable({ scope: ScopeEnum.SINGLETON })
@@ -12,7 +12,10 @@ export class CommandTrigger extends Trigger {
     this.use(async (ctx: Context, next) => {
       await next();
 
-      const { matched } = ctx.container.get(CommandContext);
+      const { matched, error } = ctx.container.get(CommandContext);
+
+      // match error, throw
+      if (error) throw error;
       if (!matched) {
         debug('Can not match any command, exit...');
         return;

@@ -8,7 +8,7 @@ export * from './trigger';
 export * from './types';
 
 export * from './proto/Command';
-export * from './proto/CommandInfo';
+export * from './proto/CommandContext';
 export * from './proto/ParsedCommands';
 
 export interface ApplicationOptions {
