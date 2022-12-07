@@ -1,14 +1,14 @@
 import { Context } from '@artus/pipeline';
 import commandLineUsage from 'command-line-usage';
-import { CommandInfo } from 'artus-common-bin';
+import { CommandContext } from 'artus-common-bin';
 
 export async function interceptor(ctx: Context, next) {
-  const cmdInfo = ctx.container.get(CommandInfo);
-  const { fuzzyMatched, matched, args } = cmdInfo.matchResult;
+  const cmdCtx = ctx.container.get(CommandContext);
+  const { fuzzyMatched, matched, args } = cmdCtx;
   if (!fuzzyMatched || !args.help) {
     if (!matched) {
       // can not match any command
-      console.error(`\n Command not found: '${cmdInfo.bin} ${cmdInfo.raw.join(' ')}', try '${fuzzyMatched?.cmds.join(' ') || cmdInfo.bin} --help' for more information.\n`);
+      console.error(`\n Command not found: '${cmdCtx.bin} ${cmdCtx.raw.join(' ')}', try '${fuzzyMatched?.cmds.join(' ') || cmdCtx.bin} --help' for more information.\n`);
       process.exit(1);
     }
 
@@ -21,7 +21,7 @@ export async function interceptor(ctx: Context, next) {
   const optionKeys = fuzzyMatched.options ? Object.keys(fuzzyMatched.options) : [];
 
   // usage info in first line
-  displayTexts.push(`Usage: ${fuzzyMatched.command.startsWith(cmdInfo.bin) ? '' : `${cmdInfo.bin} `}${fuzzyMatched.command}`);
+  displayTexts.push(`Usage: ${fuzzyMatched.command.startsWith(cmdCtx.bin) ? '' : `${cmdCtx.bin} `}${fuzzyMatched.command}`);
   if (fuzzyMatched.description) {
     displayTexts.push('', fuzzyMatched.description);
   }
@@ -29,7 +29,7 @@ export async function interceptor(ctx: Context, next) {
   // available commands, display all subcommands if match the root command
   const availableCommands = (
     fuzzyMatched.isRoot
-      ? Array.from(new Set(cmdInfo.commands.values()))
+      ? Array.from(new Set(cmdCtx.commands.values()))
       : [ fuzzyMatched ].concat(fuzzyMatched.childs || [])
   ).filter(c => !c.isRoot && c.isRunable);
 

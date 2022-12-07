@@ -7,12 +7,11 @@ export interface CommandInput {
   cwd: string;
 }
 
-export interface CommandBaseArgs {
-  _: string[];
-}
-
+/**
+ * Command Context
+ */
 @Injectable({ scope: ScopeEnum.EXECUTION })
-export class CommandInfo<T extends Record<string, any> = Record<string, any>> {
+export class CommandContext {
   #raw: string[];
 
   @Inject(ArtusInjectEnum.Application)
@@ -21,14 +20,12 @@ export class CommandInfo<T extends Record<string, any> = Record<string, any>> {
   @Inject()
   private readonly parsedCommands: ParsedCommands;
 
+  /** matched result */
+  private matchResult: MatchResult;
+
   bin: string;
   env: Record<string, string>;
   cwd: string;
-
-  /**
-   * matched Command info
-   */
-  matchResult: MatchResult;
 
   init(options: CommandInput) {
     this.bin = this.app.config.bin;
@@ -38,6 +35,10 @@ export class CommandInfo<T extends Record<string, any> = Record<string, any>> {
     return this;
   }
 
+  /**
+   * same as argv in process.argv
+   * using `raw` instead of `argv` to avoid feeling confusing between `argv` and `args`
+   */
   get raw() {
     return this.#raw;
   }

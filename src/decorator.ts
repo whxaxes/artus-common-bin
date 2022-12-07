@@ -1,8 +1,9 @@
 import { addTag, Injectable, ScopeEnum, Inject } from '@artus/core';
 import { MetadataEnum } from './constant';
-import { ParsedCommands, checkCommandCompatible } from './proto/ParsedCommands';
-import { CommandInfo } from './proto/CommandInfo';
+import { ParsedCommands } from './proto/ParsedCommands';
+import { CommandContext } from './proto/CommandInfo';
 import compose from 'koa-compose';
+import { checkCommandCompatible } from './utils';
 import { Context, Middleware as MiddlewareFunction } from '@artus/pipeline';
 import { CommandProps, OptionProps, OptionMeta, CommandMeta } from './types';
 export const CONTEXT_SYMBOL = Symbol('Command#Context');
@@ -56,7 +57,7 @@ export function DefineOption<T extends object = object>(
       get() {
         if (this[keySymbol]) return this[keySymbol];
         const ctx: Context = this[CONTEXT_SYMBOL];
-        const { matched, args, raw: argv } = ctx.container.get(CommandInfo);
+        const { matched, args, raw: argv } = ctx.container.get(CommandContext);
         const parsedCommands = ctx.container.get(ParsedCommands);
         const targetCommand = parsedCommands.getCommand(ctor);
         // check target command whether is compatible with matched

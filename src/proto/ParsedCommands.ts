@@ -100,24 +100,6 @@ export function parseCommand(cmd: string, binName: string) {
   return parsedCommand;
 }
 
-// check command is compatitble
-export function checkCommandCompatible(command: ParsedCommand, compareCommand: ParsedCommand) {
-  // check option
-  for (const key in command.options) {
-    const item = command.options[key];
-    const compareItem = compareCommand.options[key];
-    if (!compareItem) return false;
-    if (item.type !== compareItem.type) return false;
-  }
-
-  // check demanded/optional
-  const flattern = (pos: Positional[]) => pos.map(d => d.cmd.join('|')).join(' ');
-  if (flattern(command.demanded) !== flattern(compareCommand.demanded)) return false;
-  if (flattern(command.optional) !== flattern(compareCommand.optional)) return false;
-
-  return true;
-}
-
 export class ParsedCommand implements ParsedCommandStruct {
   uid: string;
   cmd: string;
@@ -172,7 +154,10 @@ export class ParsedCommands {
   private binName: string;
   private parsedCommandMap: Map<typeof Command, ParsedCommand>;
 
+  /** root of command tree */
   root: ParsedCommand;
+
+  /** command list, the key is command string used to match argv */
   commands: Map<string, ParsedCommand>;
 
   constructor(
@@ -180,11 +165,12 @@ export class ParsedCommands {
     @Inject(ArtusInjectEnum.Config) config: any,
   ) {
     const commandList = container.getInjectableByTag(MetadataEnum.COMMAND);
+    // bin name, default is pkg.name
     this.binName = config.bin;
     this.buildCommandTree(commandList);
   }
 
-  /** build command info to tree */
+  /** build command class to tree */
   private buildCommandTree(commandList: Array<typeof Command>) {
     this.commands = new Map();
     this.parsedCommandMap = new Map();
@@ -206,7 +192,7 @@ export class ParsedCommands {
       if (this.commands.has(info.uid)) {
         const existsParsedCommand = this.commands.get(info.uid);
 
-        // command override can only allow in class inheritance or options.override is true
+        // command override only allow in class inheritance or options.override=true
         const errorInfo = format('Command \'%s\' provide by %s is overrided by %s', existsParsedCommand.command, existsParsedCommand.clz.name, parsedCommand.clz.name);
         if (!parsedCommand.override && !isInheritFrom(parsedCommand.clz, existsParsedCommand.clz)) {
           throw new Error(errorInfo);
@@ -228,6 +214,7 @@ export class ParsedCommands {
       .forEach(parsedCommand => {
         let parent: ParsedCommand | undefined;
         parsedCommand.cmds.forEach(cmd => {
+          // fullCmd is the key of this.commands
           const fullCmd = parent ? parent.cmds.concat(cmd).join(' ') : cmd;
 
           let cacheParsedCommand = this.commands.get(fullCmd);
@@ -250,18 +237,23 @@ export class ParsedCommands {
       });
   }
 
+  /** check `<options>` or `[option]` and collect args */
   private checkPositional(args: string[], pos: Positional[]) {
     let nextIndex = pos.length;
     const result: Record<string, any> = {};
     const pass = pos.every((positional, index) => {
+      // `bin <files...>` match `bin file1 file2 file3` => { files: [ "file1", "file2", "file3" ] }
+      // `bin <file> [baseDir]` match `bin file1 ./` => { file: "file1", baseDir: "./" }
       const r = positional.variadic ? args.slice(index) : args[index];
       positional.cmd.forEach(c => result[c] = r);
+      // variadic means the last
       if (positional.variadic) nextIndex = args.length;
       return !!r;
     });
     return { result, pass, args: args.slice(nextIndex) };
   }
 
+  /** match command by argv */
   private _matchCommand(argv: string[]) {
     const result: MatchResult = {
       fuzzyMatched: this.root,
@@ -290,7 +282,7 @@ export class ParsedCommands {
 
     debug('Fuzzy match result is %s', result.fuzzyMatched?.clz.name);
 
-    // 2. match by demanded( like <option> ) and optional( like [baseDir] ) info
+    // 2. match demanded( <options> or <options...> ) and optional( [options] or [options...] ) info
     let extraArgs = wholeArgv.slice(index);
     if (result.fuzzyMatched) {
       const fuzzyMatched = result.fuzzyMatched;

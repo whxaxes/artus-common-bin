@@ -4,7 +4,7 @@ import Debug from 'debug';
 import compose from 'koa-compose';
 import { MetadataEnum } from './constant';
 import { EXCUTION_SYMBOL } from './decorator';
-import { CommandInfo, CommandInput } from './proto/CommandInfo';
+import { CommandContext, CommandInput } from './proto/CommandInfo';
 const debug = Debug('artus-common-bin#trigger');
 
 @Injectable({ scope: ScopeEnum.SINGLETON })
@@ -17,7 +17,7 @@ export class CommandTrigger extends Trigger {
     this.use(async (ctx: Context, next) => {
       await next();
 
-      const { matched } = ctx.container.get(CommandInfo);
+      const { matched } = ctx.container.get(CommandContext);
       if (!matched) return;
 
       const commandInstance = ctx.container.get(matched.clz);
@@ -48,7 +48,7 @@ export class CommandTrigger extends Trigger {
   async init() {
     this.use(async (ctx: Context, next) => {
       // init command info
-      const commandInfo = ctx.container.get(CommandInfo);
+      const commandInfo = ctx.container.get(CommandContext);
       commandInfo.init(ctx.input.params as any);
       await next();
     });
