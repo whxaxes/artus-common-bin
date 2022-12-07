@@ -98,6 +98,16 @@ export function Middleware(
     }
 
     existsFns = existsFns || [];
+
+    // In class inheritance:
+    //              command1  <-extend-  command2
+    // trigger --> middleware1   -->   middleware2 --> middleware3  --> run
+    //
+    // ------------
+    //
+    // In run method:
+    //                      command2                               command1
+    // trigger --> middleware2 --> middleware3 --> run --> middleware1 --> super.run
     if (!option?.mergeType || option?.mergeType === 'after') {
       existsFns = existsFns.concat(fns);
     } else {
