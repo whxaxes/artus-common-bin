@@ -124,13 +124,13 @@ describe('test', () => {
     await coffee.fork(tsNode, [ simpleBin, '--help' ])
       .debug()
       .expect('stdout', /Usage: simple-bin \[baseDir\]/)
-      .expect('stdout', /--flags number   Just A Flag/)
-      .expect('stdout', /-h, --help       Show Help/)
+      .expect('stdout', /-p, --port number   port/)
+      .expect('stdout', /-h, --help          Show Help/)
       .end();
 
-    await coffee.fork(tsNode, [ simpleBin, '--flags', '123' ])
+    await coffee.fork(tsNode, [ simpleBin, './src', '--port', '7001' ])
       .debug()
-      .expect('stdout', /flags 123/)
+      .expect('stdout', /Run with port 7001 in \.\/src/)
       .end();
   });
 
