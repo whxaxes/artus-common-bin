@@ -1,4 +1,4 @@
-import { DefineCommand, DefineOption, Command } from 'artus-common-bin';
+import { DefineCommand, DefineOption, Command, Middleware } from 'artus-common-bin';
 
 export interface DevOption {
   port?: number;
@@ -11,6 +11,11 @@ export interface DevOption {
   command: 'dev [baseDir]',
   description: 'Run the development server',
   alias: [ 'd' ],
+})
+@Middleware(async (_ctx, next) => {
+  console.info('egg-bin dev command prerun');
+  await next();
+  console.info('egg-bin dev command postrun');
 })
 export class DevCommand extends Command {
   @DefineOption<DevOption>({
@@ -34,7 +39,6 @@ export class DevCommand extends Command {
   options: DevOption;
 
   async run() {
-    console.info(this.options);
     console.info('port', this.options.port);
     console.info('inspect', this.options.inspect);
     console.info('nodeFlags', this.options.nodeFlags);

@@ -1,8 +1,11 @@
 import { Trigger, Injectable, ScopeEnum, Inject, Container } from '@artus/core';
 import { Context } from '@artus/pipeline';
+import Debug from 'debug';
 import compose from 'koa-compose';
 import { MetadataEnum } from './constant';
+import { EXCUTION_SYMBOL } from './decorator';
 import { CommandInfo, CommandInput } from './proto/CommandInfo';
+const debug = Debug('artus-common-bin#trigger');
 
 @Injectable({ scope: ScopeEnum.SINGLETON })
 export class CommandTrigger extends Trigger {
@@ -18,7 +21,10 @@ export class CommandTrigger extends Trigger {
       if (!matched) return;
 
       const commandInstance = ctx.container.get(matched.clz);
-      const result = await commandInstance.run();
+      debug('Run command %s', matched.clz.name);
+
+      // execute command
+      const result = await commandInstance[EXCUTION_SYMBOL]();
       ctx.output.data = { result };
     });
 

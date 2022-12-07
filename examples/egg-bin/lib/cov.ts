@@ -1,7 +1,7 @@
 import { DefineCommand, DefineOption, Command, Inject } from 'artus-common-bin';
 import { TestCommand, TestOption } from './test';
 
-interface CovOption {
+interface CovOption extends TestOption {
   c8?: boolean;
 }
 

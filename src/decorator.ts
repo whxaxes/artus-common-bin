@@ -5,7 +5,8 @@ import { CommandInfo } from './proto/CommandInfo';
 import compose from 'koa-compose';
 import { Context, Middleware as MiddlewareFunction } from '@artus/pipeline';
 import { CommandProps, OptionProps, OptionMeta, CommandMeta } from './types';
-const CONTEXT_SYMBOL = Symbol('Command#Context');
+export const CONTEXT_SYMBOL = Symbol('Command#Context');
+export const EXCUTION_SYMBOL = Symbol('Command#Excution');
 
 interface CommonDeoratorOption {
   /** whether merge meta info of prototype */
@@ -25,25 +26,13 @@ export function DefineCommand(
       meta = Object.assign({}, protoMeta, meta);
     }
 
+    // default command is main command
+    meta.command = meta.command || '$0';
     Reflect.defineMetadata(MetadataEnum.COMMAND, meta, target);
     addTag(MetadataEnum.COMMAND, target);
     Injectable({ scope: ScopeEnum.EXECUTION })(target);
 
-    // inject ctx to proto
-    Inject(Context)(target, CONTEXT_SYMBOL);
-    const runMethod = target.prototype.run;
-    Object.defineProperty(target.prototype, 'run', {
-      async value(...args: any[]) {
-        const ctx: Context = this[CONTEXT_SYMBOL];
-        // compose with middlewares
-        const middlewares = Reflect.getMetadata(MetadataEnum.MIDDLEWARE, target) || [];
-        return await compose([
-          ...middlewares,
-          async () => await runMethod.apply(this, args),
-        ])(ctx);
-      },
-    });
-
+    wrapWithMiddleware(target);
     return target;
   };
 }
@@ -94,13 +83,17 @@ export function Middleware(
   fn: MiddlewareFunction | MiddlewareFunction[],
   option?: CommonDeoratorOption & { mergeType?: 'before' | 'after' },
 ) {
-  return (target: any) => {
-    let existsFns: MiddlewareFunction[] = Reflect.getMetadata(MetadataEnum.MIDDLEWARE, target);
+  return (target: any, key?: string) => {
+    if (key && key !== 'run') throw new Error('Middleware can only be used in Command Class or run method');
+
+    const ctor = key ? target.constructor : target;
+    const metaKey = key ? MetadataEnum.RUN_MIDDLEWARE : MetadataEnum.MIDDLEWARE;
+    let existsFns: MiddlewareFunction[] = Reflect.getOwnMetadata(metaKey, ctor);
     const fns = Array.isArray(fn) ? fn : [ fn ];
 
-    // merge meta of prototype
-    if (!option?.override && !existsFns) {
-      const protoMeta = Reflect.getMetadata(MetadataEnum.MIDDLEWARE, Object.getPrototypeOf(target));
+    // merge meta of prototype, only works in class
+    if (!key && !option?.override && !existsFns) {
+      const protoMeta = Reflect.getOwnMetadata(MetadataEnum.MIDDLEWARE, Object.getPrototypeOf(ctor));
       existsFns = protoMeta;
     }
 
@@ -111,7 +104,42 @@ export function Middleware(
       existsFns = fns.concat(existsFns);
     }
 
-    Reflect.defineMetadata(MetadataEnum.MIDDLEWARE, existsFns, target);
-    return target;
+    Reflect.defineMetadata(metaKey, existsFns, ctor);
+    return ctor;
   };
+}
+
+/**
+ * wrap middleware logic in command class
+ */
+function wrapWithMiddleware(clz) {
+  // inject ctx to proto
+  Inject(Context)(clz, CONTEXT_SYMBOL);
+
+  // override run method
+  const runMethod = clz.prototype.run;
+  Object.defineProperty(clz.prototype, 'run', {
+    async value(...args: any[]) {
+      const ctx: Context = this[CONTEXT_SYMBOL];
+      // compose with middlewares in run method
+      const middlewares = Reflect.getOwnMetadata(MetadataEnum.RUN_MIDDLEWARE, clz) || [];
+      return await compose([
+        ...middlewares,
+        async () => await runMethod.apply(this, args),
+      ])(ctx);
+    },
+  });
+
+  // add execution method
+  Object.defineProperty(clz.prototype, EXCUTION_SYMBOL, {
+    async value(...args: any[]) {
+      const ctx: Context = this[CONTEXT_SYMBOL];
+      // compose with middlewares in Command Class
+      const middlewares = Reflect.getOwnMetadata(MetadataEnum.MIDDLEWARE, clz) || [];
+      return await compose([
+        ...middlewares,
+        async () => await this.run(...args),
+      ])(ctx);
+    },
+  });
 }

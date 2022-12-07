@@ -2,7 +2,9 @@ import { Command, EmptyCommand } from './Command';
 import { MetadataEnum } from '../constant';
 import { CommandMeta, OptionProps } from '../types';
 import parser from 'yargs-parser';
+import Debug from 'debug';
 import { ArtusInjectEnum, Injectable, Container, Inject, ScopeEnum } from '@artus/core';
+const debug = Debug('artus-common-bin#ParsedCommands');
 
 export interface MatchResult {
   /**
@@ -197,6 +199,11 @@ export class ParsedCommands {
       }
 
       const parsedCommand = new ParsedCommand(clz, { ...props, ...info });
+      if (this.commands.has(info.uid)) {
+        const existsParsedCommand = this.commands.get(info.uid);
+        debug('Command \'%s\' provide by %s is overrided by %s', existsParsedCommand.command, existsParsedCommand.clz.name, parsedCommand.clz.name);
+      }
+
       this.commands.set(info.uid, parsedCommand);
       this.parsedCommandMap.set(clz, parsedCommand);
       return parsedCommand;
@@ -215,6 +222,7 @@ export class ParsedCommands {
           let cacheParsedCommand = this.commands.get(fullCmd);
           if (!cacheParsedCommand) {
             // create empty node
+            debug('Create empty command for \'%s\'', fullCmd);
             cacheParsedCommand = new ParsedCommand(EmptyCommand, parseCommand(fullCmd, this.binName));
             this.commands.set(fullCmd, cacheParsedCommand);
           }
@@ -251,6 +259,7 @@ export class ParsedCommands {
 
     // argv without options/demanded/optional info
     const wholeArgv = result.args._;
+    debug('Start fuzzy match with %s', wholeArgv);
 
     // 1. try to match command without checking demanded and optional.
     let index = 0;
@@ -268,6 +277,8 @@ export class ParsedCommands {
       break;
     }
 
+    debug('Fuzzy match result is %s', result.fuzzyMatched?.clz.name);
+
     // 2. match by demanded( like <option> ) and optional( like [baseDir] ) info
     let extraArgs = wholeArgv.slice(index);
     if (result.fuzzyMatched) {
@@ -276,6 +287,7 @@ export class ParsedCommands {
         const checkDemanded = this.checkPositional(extraArgs, fuzzyMatched.demanded);
         if (!checkDemanded.pass) {
           // demanded not match
+          debug('Demaned is not match with %s', extraArgs);
           return result;
         }
 
@@ -292,11 +304,14 @@ export class ParsedCommands {
 
       // unknown args
       if (extraArgs.length) {
+        debug('Unknown args %s', extraArgs);
         return result;
       }
 
       // all pass
       result.matched = result.fuzzyMatched;
+
+      debug('Final match result is %s', result.matched.clz.name);
       return result;
     }
 

@@ -1,4 +1,4 @@
-import { DefineCommand, DefineOption, Command } from 'artus-common-bin';
+import { DefineCommand, DefineOption, Middleware } from 'artus-common-bin';
 import { DevCommand as BaseDevCommand, DevOption as BaseDevOption } from 'examples/egg-bin';
 
 export interface DevOption extends BaseDevOption {
@@ -8,6 +8,11 @@ export interface DevOption extends BaseDevOption {
 
 @DefineCommand({
   description: 'Run the development server with chair-bin',
+})
+@Middleware(async (_ctx, next) => {
+  console.info('chair-bin dev command prerun');
+  await next();
+  console.info('chair-bin dev command postrun');
 })
 export class ChairDevCommand extends BaseDevCommand {
   @DefineOption<DevOption>({

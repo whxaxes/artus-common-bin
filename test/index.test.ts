@@ -22,6 +22,8 @@ describe('test', () => {
     await coffee.fork(tsNode, [ eggBin, 'dev', '123', '-p=6000' ])
       .debug()
       .expect('stdout', /port 6000/)
+      .expect('stdout', /egg-bin dev command prerun/)
+      .expect('stdout', /egg-bin dev command postrun/)
       .expect('stdout', /inspect false/)
       .expect('stdout', /nodeFlags undefined/)
       .expect('stdout', /baseDir 123/)
@@ -75,6 +77,16 @@ describe('test', () => {
       .expect('stdout', /-v, --version    Show Version/)
       .end();
 
+    await coffee.fork(tsNode, [ chairBin, 'dev', '123', '-p=6000' ])
+      .debug()
+      .expect('stdout', /port 6000/)
+      .expect('stdout', /egg-bin dev command prerun\nchair-bin dev command prerun/)
+      .expect('stdout', /chair-bin dev command postrun\negg-bin dev command postrun/)
+      .expect('stdout', /inspect false/)
+      .expect('stdout', /nodeFlags undefined/)
+      .expect('stdout', /baseDir 123/)
+      .end();
+
     await coffee.fork(tsNode, [ chairBin, 'codegen' ])
       .debug()
       .expect('stdout', /run codegen in codegen plugin/)
@@ -92,6 +104,7 @@ describe('test', () => {
 
     await coffee.fork(tsNode, [ chairBin, 'module', 'dev', './' ])
       .debug()
+      .notExpect('stdout', /chair-bin dev command prerun/)
       .expect('stdout', /module is dev in .\//)
       .end();
 
