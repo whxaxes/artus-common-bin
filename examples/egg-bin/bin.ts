@@ -3,8 +3,5 @@
 import '../common';
 import { start } from 'artus-common-bin';
 
-async function run() {
-  await start({ baseDir: __dirname });
-}
-
-run().catch(console.error);
+start({ baseDir: __dirname })
+  .catch(console.error);
