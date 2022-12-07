@@ -196,7 +196,7 @@ export class ParsedCommands {
 
       const info = parseCommand(command, this.binName);
       if (this.parsedCommandMap.has(clz)) {
-        // avoid to create parsedCommand again.
+        // avoid creating parsedCommand again.
         return this.parsedCommandMap.get(clz);
       }
 
@@ -204,7 +204,7 @@ export class ParsedCommands {
       if (this.commands.has(info.uid)) {
         const existsParsedCommand = this.commands.get(info.uid);
 
-        // command override only allow in class inheritance or options.override=true
+        // override only allow in class inheritance or options.override=true
         const errorInfo = format('Command \'%s\' provide by %s is overrided by %s', existsParsedCommand.command, existsParsedCommand.clz.name, parsedCommand.clz.name);
         if (!parsedCommand.override && !isInheritFrom(parsedCommand.clz, existsParsedCommand.clz)) {
           throw new Error(errorInfo);
