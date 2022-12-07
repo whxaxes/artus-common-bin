@@ -1,4 +1,4 @@
-import { DefineCommand, DefineOption, Command } from 'artus-common-bin';
+import { DefineCommand, DefineOption, Command, Middleware } from 'artus-common-bin';
 
 export interface TestOption {
   baseDir: string;
@@ -9,6 +9,20 @@ export interface TestOption {
   command: 'test <baseDir> [file...]',
   description: 'Run the unitest',
   alias: [ 't' ],
+})
+@Middleware([
+  async (_ctx, next) => {
+    console.info('test command middleware 2');
+    await next();
+  },
+  async (_ctx, next) => {
+    console.info('test command middleware 3');
+    await next();
+  },
+])
+@Middleware(async (_ctx, next) => {
+  console.info('test command middleware 1');
+  await next();
 })
 export class TestCommand extends Command {
   @DefineOption()

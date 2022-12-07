@@ -1,11 +1,20 @@
-import { addTag, Injectable, ScopeEnum } from '@artus/core';
+import { addTag, Injectable, ScopeEnum, Inject } from '@artus/core';
 import { MetadataEnum } from './constant';
-import { Middleware as MiddlewareFunction } from '@artus/pipeline';
+import { ParsedCommands, checkCommandCompatible } from './proto/ParsedCommands';
+import { CommandInfo } from './proto/CommandInfo';
+import compose from 'koa-compose';
+import { Context, Middleware as MiddlewareFunction } from '@artus/pipeline';
 import { CommandProps, OptionProps, OptionMeta, CommandMeta } from './types';
+const CONTEXT_SYMBOL = Symbol('Command#Context');
+
+interface CommonDeoratorOption {
+  /** whether merge meta info of prototype */
+  override?: boolean;
+}
 
 export function DefineCommand(
   opt?: CommandProps,
-  option?: { override?: boolean; },
+  option?: CommonDeoratorOption,
 ) {
   return (target: any) => {
     let meta: CommandMeta = { ...opt };
@@ -19,13 +28,28 @@ export function DefineCommand(
     Reflect.defineMetadata(MetadataEnum.COMMAND, meta, target);
     addTag(MetadataEnum.COMMAND, target);
     Injectable({ scope: ScopeEnum.EXECUTION })(target);
+
+    // inject ctx to proto, wrap run method with middleware logic
+    Inject(Context)(target, CONTEXT_SYMBOL);
+    const runMethod = target.prototype.run;
+    Object.defineProperty(target.prototype, 'run', {
+      async value(...args: any[]) {
+        const ctx: Context = this[CONTEXT_SYMBOL];
+        const middlewares = Reflect.getMetadata(MetadataEnum.MIDDLEWARE, target) || [];
+        return await compose([
+          ...middlewares,
+          async () => await runMethod.apply(this, args),
+        ])(ctx);
+      },
+    });
+
     return target;
   };
 }
 
 export function DefineOption<T extends object = object>(
   meta?: { [P in keyof T]?: OptionProps; },
-  option?: { override?: boolean; },
+  option?: CommonDeoratorOption,
 ) {
   return (target: any, key: string) => {
     const ctor = target.constructor;
@@ -35,6 +59,27 @@ export function DefineOption<T extends object = object>(
       const protoMeta = Reflect.getMetadata(MetadataEnum.OPTION, Object.getPrototypeOf(ctor));
       meta = Object.assign({}, protoMeta?.meta, meta);
     }
+
+    // define option key
+    const keySymbol = Symbol(`${ctor.name}#${key}`);
+    Object.defineProperty(ctor.prototype, key, {
+      get() {
+        if (this[keySymbol]) return this[keySymbol];
+        const ctx: Context = this[CONTEXT_SYMBOL];
+        const { matched, args, raw: argv } = ctx.container.get(CommandInfo);
+        const parsedCommands = ctx.container.get(ParsedCommands);
+        const targetCommand = parsedCommands.getCommand(ctor);
+        // check target command whether is compatible with matched
+        const isSameCommandOrCompatible = matched.clz === ctor || checkCommandCompatible(targetCommand, matched);
+        this[keySymbol] = isSameCommandOrCompatible ? args : parsedCommands.parseArgs(argv, targetCommand);
+        return this[keySymbol];
+      },
+
+      set(val: any) {
+        // allow developer to override options
+        this[keySymbol] = val;
+      },
+    });
 
     Reflect.defineMetadata(
       MetadataEnum.OPTION,
@@ -46,7 +91,7 @@ export function DefineOption<T extends object = object>(
 
 export function Middleware(
   fn: MiddlewareFunction | MiddlewareFunction[],
-  option?: { override?: boolean; mergeType?: 'before' | 'after' },
+  option?: CommonDeoratorOption & { mergeType?: 'before' | 'after' },
 ) {
   return (target: any) => {
     let existsFns: MiddlewareFunction[] = Reflect.getMetadata(MetadataEnum.MIDDLEWARE, target);

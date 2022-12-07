@@ -64,6 +64,6 @@ export class CommandInfo<T extends Record<string, any> = Record<string, any>> {
   }
 
   parse() {
-    this.matchResult = this.parsedCommands.getCommand(this.raw);
+    this.matchResult = this.parsedCommands.matchCommand(this.raw);
   }
 }

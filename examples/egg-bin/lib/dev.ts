@@ -34,6 +34,7 @@ export class DevCommand extends Command {
   options: DevOption;
 
   async run() {
+    console.info(this.options);
     console.info('port', this.options.port);
     console.info('inspect', this.options.inspect);
     console.info('nodeFlags', this.options.nodeFlags);

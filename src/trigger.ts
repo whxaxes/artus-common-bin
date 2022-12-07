@@ -14,27 +14,17 @@ export class CommandTrigger extends Trigger {
     this.use(async (ctx: Context, next) => {
       await next();
 
-      const cmdInfo = ctx.container.get(CommandInfo);
-      const { matched, args } = cmdInfo.matchResult;
+      const { matched } = ctx.container.get(CommandInfo);
       if (!matched) return;
 
       const commandInstance = ctx.container.get(matched.clz);
-      Object.defineProperty(commandInstance, matched.propKey, { value: args });
-
-      // trigger command
-      const middlewares = Reflect.getMetadata(MetadataEnum.MIDDLEWARE, matched.clz) || [];
-      await compose([
-        ...middlewares,
-
-        async () => {
-          const result = await commandInstance.run();
-          ctx.output.data = { result };
-        },
-      ])(ctx);
+      const result = await commandInstance.run();
+      ctx.output.data = { result };
     });
 
     try {
       const ctx = await this.initContext();
+      ctx.container.set({ id: Context, value: ctx });
 
       // set input data
       ctx.input.params = {

@@ -42,6 +42,15 @@ describe('test', () => {
 
     await coffee.fork(tsNode, [ eggBin, 'test', './', 'file1', 'file2' ])
       .debug()
+      .expect('stdout', /test command middleware 1\ntest command middleware 2\ntest command middleware 3/)
+      .expect('stdout', /test baseDir .\//)
+      .expect('stdout', /test files \[ 'file1', 'file2' \]/)
+      .end();
+
+    await coffee.fork(tsNode, [ eggBin, 'cov', './', 'file1', 'file2', '--c8=true' ])
+      .debug()
+      .expect('stdout', /coverage c8 true/)
+      .expect('stdout', /test command middleware 1\ntest command middleware 2\ntest command middleware 3/)
       .expect('stdout', /test baseDir .\//)
       .expect('stdout', /test files \[ 'file1', 'file2' \]/)
       .end();
