@@ -19,7 +19,7 @@ export default class UsageLifecycle implements ApplicationLifecycle {
       })
     ));
 
-    this.program.use(async function interceptor(ctx: CommandContext, next) {
+    this.program.use(async (ctx: CommandContext, next) => {
       const { fuzzyMatched, matched, args, bin, raw } = ctx;
       if (!fuzzyMatched || !args.help) {
         if (!matched) {
