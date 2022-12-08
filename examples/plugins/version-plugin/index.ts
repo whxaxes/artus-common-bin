@@ -4,7 +4,7 @@ import { Program, CommandContext, CommonBinConfig } from 'artus-common-bin';
 import fs from 'fs/promises';
 import path from 'path';
 @LifecycleHookUnit()
-export default class UsageLifecycle implements ApplicationLifecycle {
+export default class VersionLifecycle implements ApplicationLifecycle {
   @Inject()
   private readonly program: Program;
 
