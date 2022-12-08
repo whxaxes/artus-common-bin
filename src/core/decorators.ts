@@ -84,7 +84,7 @@ export function DefineOption<T extends object = object>(
 }
 
 export function Middleware(fn: MiddlewareInput, option?: MiddlewareDecoratorOption) {
-  return (target: any, key?: string) => {
+  return <T extends Command>(target: T | (new(...args: any) => T), key?: string) => {
     if (key && key !== 'run') throw new Error('Middleware can only be used in Command Class or run method');
 
     const ctor = key ? target.constructor : target;
@@ -118,7 +118,6 @@ export function Middleware(fn: MiddlewareInput, option?: MiddlewareDecoratorOpti
     }
 
     Reflect.defineMetadata(metaKey, existsFns, ctor);
-    return ctor;
   };
 }
 

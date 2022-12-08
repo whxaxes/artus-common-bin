@@ -52,6 +52,6 @@ export class Program {
 
   /** register middleware in command.run */
   useInExecution(clz: MaybeParsedCommand, fn: MiddlewareInput, opt?: MiddlewareDecoratorOption) {
-    Middleware(fn, opt)(this.getParsedCommand(clz), 'run');
+    Middleware(fn, opt)(this.getParsedCommand(clz).clz, 'run');
   }
 }
