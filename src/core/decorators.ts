@@ -84,7 +84,7 @@ export function DefineOption<T extends object = object>(
 }
 
 export function Middleware(fn: MiddlewareInput, option?: MiddlewareDecoratorOption) {
-  return <T extends (typeof Command) | Command>(target: T, key?: string) => {
+  return <T extends (typeof Command) | Command>(target: T, key?: 'run') => {
     if (key && key !== 'run') throw new Error('Middleware can only be used in Command Class or run method');
 
     const ctor = key ? target.constructor : target;
