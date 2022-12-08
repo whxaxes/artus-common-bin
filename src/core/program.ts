@@ -10,6 +10,8 @@ import { Command } from '../proto/Command';
 import { Middleware, MiddlewareDecoratorOption } from './decorators';
 import { ParsedCommand, ParsedCommands } from '../proto/ParsedCommands';
 
+type MaybeParsedCommand = (typeof Command) | ParsedCommand;
+
 @Injectable({ scope: ScopeEnum.SINGLETON })
 export class Program {
   @Inject()
@@ -28,10 +30,14 @@ export class Program {
     return this.parsedCommands.root;
   }
 
+  getParsedCommand(clz: MaybeParsedCommand) {
+    return clz instanceof ParsedCommand ? clz : this.parsedCommands.getCommand(clz);
+  }
+
   /** add options, works in all command by default */
-  option(opt: Record<string, OptionProps>, effectCommands?: ParsedCommand[]) {
+  option(opt: Record<string, OptionProps>, effectCommands?: MaybeParsedCommand[]) {
     effectCommands = effectCommands || Array.from(this.commands.values());
-    effectCommands.forEach(c => c.updateGlobalOptions(opt));
+    effectCommands.forEach(c => this.getParsedCommand(c).updateGlobalOptions(opt));
   }
 
   /** register pipeline middleware */
@@ -40,14 +46,12 @@ export class Program {
   }
 
   /** register middleware in command */
-  useInCommand(clz: (typeof Command) | ParsedCommand, fn: MiddlewareInput, opt?: MiddlewareDecoratorOption) {
-    const cmd = clz instanceof ParsedCommand ? clz : this.parsedCommands.getCommand(clz);
-    Middleware(fn, opt)(cmd.clz);
+  useInCommand(clz: MaybeParsedCommand, fn: MiddlewareInput, opt?: MiddlewareDecoratorOption) {
+    Middleware(fn, opt)(this.getParsedCommand(clz).clz);
   }
 
   /** register middleware in command.run */
-  useInExecution(clz: (typeof Command) | ParsedCommand, fn: MiddlewareInput, opt?: MiddlewareDecoratorOption) {
-    const cmd = clz instanceof ParsedCommand ? clz : this.parsedCommands.getCommand(clz);
-    Middleware(fn, opt)(cmd.clz, 'run');
+  useInExecution(clz: MaybeParsedCommand, fn: MiddlewareInput, opt?: MiddlewareDecoratorOption) {
+    Middleware(fn, opt)(this.getParsedCommand(clz), 'run');
   }
 }
