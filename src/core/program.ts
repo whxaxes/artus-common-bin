@@ -27,6 +27,11 @@ export class Program {
     return this.parsedCommands.root;
   }
 
+  /** add options */
+  addOption() {
+
+  }
+
   /** register pipeline middleware */
   use(fn: MiddlewareInput) {
     return this.trigger.use(fn);
@@ -39,7 +44,7 @@ export class Program {
   }
 
   /** register middleware in command.run */
-  useInRunMethod(clz: (typeof Command) | ParsedCommand, fn: MiddlewareInput, opt?: MiddlewareDecoratorOption) {
+  useInExecution(clz: (typeof Command) | ParsedCommand, fn: MiddlewareInput, opt?: MiddlewareDecoratorOption) {
     const cmd = clz instanceof ParsedCommand ? clz : this.parsedCommands.getCommand(clz);
     Middleware(fn, opt)(cmd.clz, 'run');
   }
