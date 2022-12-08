@@ -4,7 +4,7 @@ import { ParsedCommands } from '../proto/ParsedCommands';
 import { CommandContext } from '../proto/CommandContext';
 import compose from 'koa-compose';
 import { checkCommandCompatible } from '../utils';
-import { Context, MiddlewareInput, Middlewares } from '@artus/pipeline';
+import { MiddlewareInput, Middlewares } from '@artus/pipeline';
 import { CommandProps, OptionProps, OptionMeta, CommandMeta } from '../types';
 
 export interface CommonDecoratorOption {
@@ -58,8 +58,8 @@ export function DefineOption<T extends object = object>(
     Object.defineProperty(ctor.prototype, key, {
       get() {
         if (this[keySymbol]) return this[keySymbol];
-        const ctx: Context = this[CONTEXT_SYMBOL];
-        const { matched, args, raw: argv } = ctx.container.get(CommandContext);
+        const ctx: CommandContext = this[CONTEXT_SYMBOL];
+        const { matched, args, raw: argv } = ctx;
         const parsedCommands = ctx.container.get(ParsedCommands);
         const targetCommand = parsedCommands.getCommand(ctor);
         // check target command whether is compatible with matched
@@ -126,13 +126,13 @@ export function Middleware(fn: MiddlewareInput, option?: MiddlewareDecoratorOpti
  */
 function wrapWithMiddleware(clz) {
   // inject ctx to proto
-  Inject(Context)(clz, CONTEXT_SYMBOL);
+  Inject(CommandContext)(clz, CONTEXT_SYMBOL);
 
   // override run method
   const runMethod = clz.prototype.run;
   Object.defineProperty(clz.prototype, 'run', {
     async value(...args: any[]) {
-      const ctx: Context = this[CONTEXT_SYMBOL];
+      const ctx: CommandContext = this[CONTEXT_SYMBOL];
       // compose with middlewares in run method
       const middlewares = Reflect.getOwnMetadata(MetadataEnum.RUN_MIDDLEWARE, clz) || [];
       return await compose([
@@ -145,7 +145,7 @@ function wrapWithMiddleware(clz) {
   // add execution method
   Object.defineProperty(clz.prototype, EXCUTION_SYMBOL, {
     async value(...args: any[]) {
-      const ctx: Context = this[CONTEXT_SYMBOL];
+      const ctx: CommandContext = this[CONTEXT_SYMBOL];
       // compose with middlewares in Command Class
       const middlewares = Reflect.getOwnMetadata(MetadataEnum.MIDDLEWARE, clz) || [];
       return await compose([

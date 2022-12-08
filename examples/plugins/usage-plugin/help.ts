@@ -12,15 +12,15 @@ interface Option {
 })
 export class HelpCommand extends Command {
   @Inject()
-  cmdCtx: CommandContext;
+  ctx: CommandContext;
 
   @DefineOption()
   option: Option;
 
   async run() {
-    const cmdCtx = this.cmdCtx;
+    const ctx = this.ctx;
     const { command } = this.option;
-    const helpCommand = this.cmdCtx.commands.get(`${this.cmdCtx.bin} ${command}`) || this.cmdCtx.rootCommand;
+    const helpCommand = ctx.commands.get(command) || ctx.rootCommand;
 
     // display help informations
     const displayTexts = [];
@@ -28,7 +28,7 @@ export class HelpCommand extends Command {
     const optionKeys = helpCommand.options ? Object.keys(helpCommand.options) : [];
 
     // usage info in first line
-    displayTexts.push(`Usage: ${helpCommand.command.startsWith(cmdCtx.bin) ? '' : `${cmdCtx.bin} `}${helpCommand.command}`);
+    displayTexts.push(`Usage: ${helpCommand.command.startsWith(ctx.bin) ? '' : `${ctx.bin} `}${helpCommand.command}`);
     if (helpCommand.description) {
       displayTexts.push('', helpCommand.description);
     }
@@ -36,7 +36,7 @@ export class HelpCommand extends Command {
     // available commands, display all subcommands if match the root command
     const availableCommands = (
       helpCommand.isRoot
-        ? Array.from(new Set(cmdCtx.commands.values()))
+        ? Array.from(new Set(ctx.commands.values()))
         : [ helpCommand ].concat(helpCommand.childs || [])
     ).filter(c => !c.isRoot && c.isRunable);
 

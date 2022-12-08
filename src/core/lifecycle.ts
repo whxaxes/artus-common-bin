@@ -7,11 +7,6 @@ export default class Lifecycle implements ApplicationLifecycle {
   private readonly trigger: CommandTrigger;
 
   @LifecycleHook()
-  async configDidLoad() {
-    await this.trigger.init();
-  }
-
-  @LifecycleHook()
   async didReady() {
     await this.trigger.start();
   }

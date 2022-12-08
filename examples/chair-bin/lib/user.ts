@@ -1,4 +1,4 @@
-import { Inject, DefineCommand, DefineOption, Command, CommandContext, Context, Middleware } from 'artus-common-bin';
+import { Inject, DefineCommand, DefineOption, Command, CommandContext, Middleware } from 'artus-common-bin';
 import { UserService } from '../service/user';
 import { AuthService } from '../service/auth';
 
@@ -6,11 +6,10 @@ export interface UserOption {
   authCode: string;
 }
 
-async function authMiddleware(ctx: Context, next) {
+async function authMiddleware(ctx: CommandContext, next) {
   const authService = ctx.container.get(AuthService);
-  const cmdCtx = ctx.container.get(CommandContext);
   const authCode = '123';
-  if (cmdCtx.args.authCode !== authCode) {
+  if (ctx.args.authCode !== authCode) {
     const inputCode = await authService.auth();
     if (inputCode !== authCode) {
       console.error('Error: invalid user!');

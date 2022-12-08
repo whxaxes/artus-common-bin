@@ -1,6 +1,6 @@
 import '../../common';
 import { Inject, ApplicationLifecycle, LifecycleHook, LifecycleHookUnit } from '@artus/core';
-import { Program, Context, CommandContext, Helper } from 'artus-common-bin';
+import { Program, CommandContext, Helper } from 'artus-common-bin';
 
 @LifecycleHookUnit()
 export default class UsageLifecycle implements ApplicationLifecycle {
@@ -19,8 +19,8 @@ export default class UsageLifecycle implements ApplicationLifecycle {
       })
     ));
 
-    this.program.use(async function interceptor(ctx: Context, next) {
-      const { fuzzyMatched, matched, args, bin, raw } = ctx.container.get(CommandContext);
+    this.program.use(async function interceptor(ctx: CommandContext, next) {
+      const { fuzzyMatched, matched, args, bin, raw } = ctx;
       if (!fuzzyMatched || !args.help) {
         if (!matched) {
           // can not match any command
@@ -33,7 +33,7 @@ export default class UsageLifecycle implements ApplicationLifecycle {
 
       // redirect to help command
       const helper = ctx.container.get(Helper);
-      await helper.redirect([ 'help', `"${fuzzyMatched.uid}"` ]);
+      await helper.redirect([ 'help', fuzzyMatched.uid ]);
     });
   }
 }

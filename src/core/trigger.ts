@@ -1,5 +1,5 @@
 import { Trigger, Injectable, ScopeEnum } from '@artus/core';
-import { Context } from '@artus/pipeline';
+import { Context, Output } from '@artus/pipeline';
 import Debug from 'debug';
 import { EXCUTION_SYMBOL } from '../constant';
 import { CommandContext, CommandInput } from '../proto/CommandContext';
@@ -32,28 +32,32 @@ export class CommandTrigger extends Trigger {
     await this.execute();
   }
 
-  /** register middleware to init command context on pipeline startup */
-  async init() {
-    this.use(async (ctx: Context, next) => {
-      const cmdCtx = ctx.container.get(CommandContext);
-      cmdCtx.init(ctx.input.params as CommandInput);
-      await next();
-    });
+  /** override artus context */
+  async initContext(input?: CommandInput, output?: Output): Promise<Context> {
+    const baseCtx = await super.initContext(input, output);
+    const cmdCtx = baseCtx.container.get(CommandContext);
+    cmdCtx.container = baseCtx.container;
+    cmdCtx.container.set({ id: CommandContext, value: cmdCtx });
+    cmdCtx.input = baseCtx.input as CommandInput;
+    cmdCtx.output = baseCtx.output;
+    cmdCtx.init();
+    return cmdCtx;
   }
 
   /** start a pipeline and execute */
-  async execute(input?: Partial<CommandInput>) {
+  async execute(input?: Partial<CommandInput['params']>) {
     try {
-      const ctx = await this.initContext();
-      ctx.container.set({ id: Context, value: ctx });
+      const ctx = await this.initContext({
+        params: {
+          // set input data
+          argv: process.argv.slice(2),
+          env: { ...process.env },
+          cwd: process.cwd(),
+          ...input,
+        },
+      });
 
-      // set input data
-      ctx.input.params = {
-        argv: process.argv.slice(2),
-        env: { ...process.env },
-        cwd: process.cwd(),
-        ...input,
-      } satisfies CommandInput;
+      ctx.container.set({ id: Context, value: ctx });
 
       await this.startPipeline(ctx);
     } catch (err) {

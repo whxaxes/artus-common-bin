@@ -6,7 +6,6 @@ import Debug from 'debug';
 import { format } from 'node:util';
 import { isInheritFrom, isNil } from '../utils';
 import { ArtusInjectEnum, Injectable, Container, Inject, ScopeEnum } from '@artus/core';
-import { Middlewares } from '@artus/pipeline';
 const debug = Debug('artus-common-bin#ParsedCommands');
 
 export interface MatchResult {

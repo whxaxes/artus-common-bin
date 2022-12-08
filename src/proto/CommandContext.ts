@@ -1,17 +1,20 @@
 import { ArtusApplication, ArtusInjectEnum, Inject, Injectable, ScopeEnum } from '@artus/core';
+import { Context, Input, Output } from '@artus/pipeline';
 import { ParsedCommands, MatchResult } from './ParsedCommands';
 
 export interface CommandInput {
-  argv: string[];
-  env: Record<string, string>;
-  cwd: string;
+  params: {
+    argv: string[];
+    env: Record<string, string>;
+    cwd: string;
+  };
 }
 
 /**
  * Command Context, store `argv`/`env`/`cwd`/`match result` ...
  */
-@Injectable({ scope: ScopeEnum.EXECUTION })
-export class CommandContext<T extends Record<string, any> = Record<string, any>> {
+@Injectable({ scope: ScopeEnum.SINGLETON })
+export class CommandContext<T extends Record<string, any> = Record<string, any>> extends Context {
   #raw: string[];
 
   @Inject(ArtusInjectEnum.Application)
@@ -26,12 +29,14 @@ export class CommandContext<T extends Record<string, any> = Record<string, any>>
   bin: string;
   env: Record<string, string>;
   cwd: string;
+  input: CommandInput;
 
-  init(options: CommandInput) {
+  init() {
+    const params = this.input.params;
     this.bin = this.app.config.bin;
-    this.env = options.env;
-    this.cwd = options.cwd;
-    this.raw = options.argv;
+    this.env = params.env;
+    this.cwd = params.cwd;
+    this.raw = params.argv;
     return this;
   }
 

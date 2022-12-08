@@ -1,6 +1,6 @@
 import '../../common';
 import { Inject, ArtusInjectEnum, ApplicationLifecycle, LifecycleHook, LifecycleHookUnit } from '@artus/core';
-import { Program, Context, CommandContext, CommonBinConfig } from 'artus-common-bin';
+import { Program, CommandContext, CommonBinConfig } from 'artus-common-bin';
 import fs from 'fs/promises';
 import path from 'path';
 @LifecycleHookUnit()
@@ -20,8 +20,8 @@ export default class UsageLifecycle implements ApplicationLifecycle {
     });
 
     // intercept root command and show version
-    this.program.useInCommand(rootCommand, async (ctx: Context, next) => {
-      const { args, bin } = ctx.container.get(CommandContext);
+    this.program.useInCommand(rootCommand, async (ctx: CommandContext, next) => {
+      const { args, bin } = ctx;
       if (args.version) {
         // app config
         const config: CommonBinConfig = ctx.container.get(ArtusInjectEnum.Config);

@@ -1,7 +1,7 @@
 import { Inject, Injectable, ScopeEnum } from '@artus/core';
-import { Context } from '@artus/pipeline';
 import { ParsedCommands } from '../proto/ParsedCommands';
 import { Command } from '../proto/Command';
+import { CommandContext } from '../proto/CommandContext';
 import { CommandTrigger } from './trigger';
 import { EXCUTION_SYMBOL } from '../constant';
 import assert from 'node:assert';
@@ -10,7 +10,7 @@ import { format } from 'node:util';
 @Injectable({ scope: ScopeEnum.EXECUTION })
 export class Helper {
   @Inject()
-  private readonly ctx: Context;
+  private readonly ctx: CommandContext;
 
   @Inject()
   private readonly trigger: CommandTrigger;
