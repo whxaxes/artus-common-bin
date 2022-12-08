@@ -3,6 +3,7 @@ import { MetadataEnum, CONTEXT_SYMBOL, EXCUTION_SYMBOL } from '../constant';
 import { ParsedCommands } from '../proto/ParsedCommands';
 import { CommandContext } from '../proto/CommandContext';
 import compose from 'koa-compose';
+import { Command } from '../proto/Command';
 import { checkCommandCompatible } from '../utils';
 import { MiddlewareInput, Middlewares } from '@artus/pipeline';
 import { CommandProps, OptionProps, OptionMeta, CommandMeta } from '../types';
@@ -20,7 +21,7 @@ export function DefineCommand(
   opt?: CommandProps,
   option?: CommonDecoratorOption,
 ) {
-  return (target: any) => {
+  return <T extends typeof Command>(target: T) => {
     let meta: CommandMeta = { ...opt };
 
     // merge meta of prototype
@@ -44,8 +45,8 @@ export function DefineOption<T extends object = object>(
   meta?: { [P in keyof T]?: OptionProps; },
   option?: CommonDecoratorOption,
 ) {
-  return (target: any, key: string) => {
-    const ctor = target.constructor;
+  return <G extends Command>(target: G, key: string) => {
+    const ctor = target.constructor as typeof Command;
 
     // merge meta of prototype
     if (!option?.override) {
