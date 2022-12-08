@@ -3,7 +3,7 @@ import { ArtusApplication, Scanner } from '@artus/core';
 
 export * from '@artus/core';
 export { Context } from '@artus/pipeline';
-export * from './core/decorator';
+export * from './core/decorators';
 export * from './core/program';
 export * from './core/helper';
 export * from './types';

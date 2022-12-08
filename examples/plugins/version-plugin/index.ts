@@ -1,31 +1,38 @@
 import '../../common';
-import { Inject, ApplicationLifecycle, LifecycleHook, LifecycleHookUnit } from '@artus/core';
-import { Program, ParsedCommands } from 'artus-common-bin';
-import { interceptor } from './interceptor';
-
+import { Inject, ArtusInjectEnum, ApplicationLifecycle, LifecycleHook, LifecycleHookUnit } from '@artus/core';
+import { Program, Context, CommandContext, CommonBinConfig } from 'artus-common-bin';
+import fs from 'fs/promises';
+import path from 'path';
 @LifecycleHookUnit()
 export default class UsageLifecycle implements ApplicationLifecycle {
-  @Inject()
-  private readonly commands: ParsedCommands;
-
   @Inject()
   private readonly program: Program;
 
   @LifecycleHook()
   async configDidLoad() {
-    const { root } = this.commands;
-    if (!root.options?.version) {
-      root.options = {
-        ...root.options,
+    const { rootCommand } = this.program;
+    rootCommand.updateOptions({
+      version: {
+        type: 'boolean',
+        alias: 'v',
+        description: 'Show Version',
+      },
+    });
 
-        version: {
-          type: 'boolean',
-          alias: 'v',
-          description: 'Show Version',
-        },
-      };
+    // intercept root command and show version
+    this.program.useInCommand(rootCommand, async (ctx: Context, next) => {
+      const { args, bin } = ctx.container.get(CommandContext);
+      if (args.version) {
+        // app config
+        const config: CommonBinConfig = ctx.container.get(ArtusInjectEnum.Config);
 
-      this.program.use(interceptor);
-    }
+        // read version from package.json
+        const pkgPath = path.resolve(config.baseDir, './package.json');
+        const pkgInfo = JSON.parse(await fs.readFile(pkgPath, 'utf-8'));
+        return console.info(bin, pkgInfo.version || '1.0.0');
+      }
+
+      await next();
+    });
   }
 }

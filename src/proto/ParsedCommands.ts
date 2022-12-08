@@ -6,6 +6,7 @@ import Debug from 'debug';
 import { format } from 'node:util';
 import { isInheritFrom, isNil } from '../utils';
 import { ArtusInjectEnum, Injectable, Container, Inject, ScopeEnum } from '@artus/core';
+import { Middlewares } from '@artus/pipeline';
 const debug = Debug('artus-common-bin#ParsedCommands');
 
 export interface MatchResult {
@@ -155,6 +156,10 @@ export class ParsedCommand implements ParsedCommandStruct {
 
   get depth() {
     return this.cmds.length;
+  }
+
+  updateOptions(opt: Record<string, OptionProps>) {
+    this.options = Object.assign({}, this.options, opt);
   }
 }
 

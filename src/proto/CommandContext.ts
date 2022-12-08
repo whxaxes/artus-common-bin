@@ -11,7 +11,7 @@ export interface CommandInput {
  * Command Context, store `argv`/`env`/`cwd`/`match result` ...
  */
 @Injectable({ scope: ScopeEnum.EXECUTION })
-export class CommandContext {
+export class CommandContext<T extends Record<string, any> = Record<string, any>> {
   #raw: string[];
 
   @Inject(ArtusInjectEnum.Application)
@@ -52,8 +52,12 @@ export class CommandContext {
     return this.parsedCommands.commands;
   }
 
+  get rootCommand() {
+    return this.parsedCommands.root;
+  }
+
   get args() {
-    return this.matchResult.args;
+    return this.matchResult.args as T;
   }
 
   get fuzzyMatched() {
@@ -68,7 +72,7 @@ export class CommandContext {
     return this.matchResult.error;
   }
 
-  parse() {
+  private parse() {
     this.matchResult = this.parsedCommands.matchCommand(this.raw);
   }
 }

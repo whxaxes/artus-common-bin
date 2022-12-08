@@ -4,17 +4,21 @@ import { ParsedCommands } from '../proto/ParsedCommands';
 import { CommandContext } from '../proto/CommandContext';
 import compose from 'koa-compose';
 import { checkCommandCompatible } from '../utils';
-import { Context, Middlewares } from '@artus/pipeline';
+import { Context, MiddlewareInput, Middlewares } from '@artus/pipeline';
 import { CommandProps, OptionProps, OptionMeta, CommandMeta } from '../types';
 
-interface CommonDeoratorOption {
+export interface CommonDecoratorOption {
   /** whether merge meta info of prototype */
   override?: boolean;
 }
 
+export interface MiddlewareDecoratorOption extends CommonDecoratorOption {
+  mergeType?: 'before' | 'after'
+}
+
 export function DefineCommand(
   opt?: CommandProps,
-  option?: CommonDeoratorOption,
+  option?: CommonDecoratorOption,
 ) {
   return (target: any) => {
     let meta: CommandMeta = { ...opt };
@@ -38,7 +42,7 @@ export function DefineCommand(
 
 export function DefineOption<T extends object = object>(
   meta?: { [P in keyof T]?: OptionProps; },
-  option?: CommonDeoratorOption,
+  option?: CommonDecoratorOption,
 ) {
   return (target: any, key: string) => {
     const ctor = target.constructor;
@@ -78,17 +82,14 @@ export function DefineOption<T extends object = object>(
   };
 }
 
-export function Middleware(
-  fn: Middlewares,
-  option?: CommonDeoratorOption & { mergeType?: 'before' | 'after' },
-) {
+export function Middleware(fn: MiddlewareInput, option?: MiddlewareDecoratorOption) {
   return (target: any, key?: string) => {
     if (key && key !== 'run') throw new Error('Middleware can only be used in Command Class or run method');
 
     const ctor = key ? target.constructor : target;
     const metaKey = key ? MetadataEnum.RUN_MIDDLEWARE : MetadataEnum.MIDDLEWARE;
+    const fns = (Array.isArray(fn) ? fn : [ fn ]) as Middlewares;
     let existsFns: Middlewares = Reflect.getOwnMetadata(metaKey, ctor);
-    const fns = Array.isArray(fn) ? fn : [ fn ];
 
     // merge meta of prototype, only works in class
     if (!key && !option?.override && !existsFns) {
