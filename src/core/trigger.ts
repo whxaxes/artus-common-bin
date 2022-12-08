@@ -1,8 +1,8 @@
 import { Trigger, Injectable, ScopeEnum } from '@artus/core';
 import { Context } from '@artus/pipeline';
 import Debug from 'debug';
-import { EXCUTION_SYMBOL } from './decorator';
-import { CommandContext, CommandInput } from './proto/CommandContext';
+import { EXCUTION_SYMBOL } from '../constant';
+import { CommandContext, CommandInput } from '../proto/CommandContext';
 const debug = Debug('artus-common-bin#trigger');
 
 @Injectable({ scope: ScopeEnum.SINGLETON })
@@ -29,6 +29,20 @@ export class CommandTrigger extends Trigger {
       ctx.output.data = { result };
     });
 
+    await this.execute();
+  }
+
+  /** register middleware to init command context on pipeline startup */
+  async init() {
+    this.use(async (ctx: Context, next) => {
+      const cmdCtx = ctx.container.get(CommandContext);
+      cmdCtx.init(ctx.input.params as CommandInput);
+      await next();
+    });
+  }
+
+  /** start a pipeline and execute */
+  async execute(input?: Partial<CommandInput>) {
     try {
       const ctx = await this.initContext();
       ctx.container.set({ id: Context, value: ctx });
@@ -38,20 +52,12 @@ export class CommandTrigger extends Trigger {
         argv: process.argv.slice(2),
         env: { ...process.env },
         cwd: process.cwd(),
+        ...input,
       } satisfies CommandInput;
 
       await this.startPipeline(ctx);
     } catch (err) {
       console.error(err);
     }
-  }
-
-  async init() {
-    this.use(async (ctx: Context, next) => {
-      // init command info
-      const cmdCtx = ctx.container.get(CommandContext);
-      cmdCtx.init(ctx.input.params as CommandInput);
-      await next();
-    });
   }
 }

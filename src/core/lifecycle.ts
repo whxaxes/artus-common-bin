@@ -1,4 +1,4 @@
-import { Inject, ApplicationLifecycle, LifecycleHook, LifecycleHookUnit, Container, ArtusInjectEnum, ArtusApplication } from '@artus/core';
+import { Inject, ApplicationLifecycle, LifecycleHook, LifecycleHookUnit } from '@artus/core';
 import { CommandTrigger } from './trigger';
 
 @LifecycleHookUnit()

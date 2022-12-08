@@ -4,3 +4,6 @@ export enum MetadataEnum {
   MIDDLEWARE = 'MIDDLEWARE_METADATA',
   RUN_MIDDLEWARE = 'RUN_MIDDLEWARE_METADATA'
 }
+
+export const CONTEXT_SYMBOL = Symbol('Command#Context');
+export const EXCUTION_SYMBOL = Symbol('Command#Excution');

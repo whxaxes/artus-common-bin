@@ -1,13 +1,11 @@
 import { addTag, Injectable, ScopeEnum, Inject } from '@artus/core';
-import { MetadataEnum } from './constant';
-import { ParsedCommands } from './proto/ParsedCommands';
-import { CommandContext } from './proto/CommandContext';
+import { MetadataEnum, CONTEXT_SYMBOL, EXCUTION_SYMBOL } from '../constant';
+import { ParsedCommands } from '../proto/ParsedCommands';
+import { CommandContext } from '../proto/CommandContext';
 import compose from 'koa-compose';
-import { checkCommandCompatible } from './utils';
-import { Context, Middleware as MiddlewareFunction } from '@artus/pipeline';
-import { CommandProps, OptionProps, OptionMeta, CommandMeta } from './types';
-export const CONTEXT_SYMBOL = Symbol('Command#Context');
-export const EXCUTION_SYMBOL = Symbol('Command#Excution');
+import { checkCommandCompatible } from '../utils';
+import { Context, Middlewares } from '@artus/pipeline';
+import { CommandProps, OptionProps, OptionMeta, CommandMeta } from '../types';
 
 interface CommonDeoratorOption {
   /** whether merge meta info of prototype */
@@ -81,7 +79,7 @@ export function DefineOption<T extends object = object>(
 }
 
 export function Middleware(
-  fn: MiddlewareFunction | MiddlewareFunction[],
+  fn: Middlewares,
   option?: CommonDeoratorOption & { mergeType?: 'before' | 'after' },
 ) {
   return (target: any, key?: string) => {
@@ -89,7 +87,7 @@ export function Middleware(
 
     const ctor = key ? target.constructor : target;
     const metaKey = key ? MetadataEnum.RUN_MIDDLEWARE : MetadataEnum.MIDDLEWARE;
-    let existsFns: MiddlewareFunction[] = Reflect.getOwnMetadata(metaKey, ctor);
+    let existsFns: Middlewares = Reflect.getOwnMetadata(metaKey, ctor);
     const fns = Array.isArray(fn) ? fn : [ fn ];
 
     // merge meta of prototype, only works in class

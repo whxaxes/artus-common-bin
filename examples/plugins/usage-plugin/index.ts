@@ -1,6 +1,6 @@
 import '../../common';
 import { Inject, ApplicationLifecycle, LifecycleHook, LifecycleHookUnit } from '@artus/core';
-import { CommandTrigger, ParsedCommands } from 'artus-common-bin';
+import { Program, ParsedCommands } from 'artus-common-bin';
 import { interceptor } from './interceptor';
 
 @LifecycleHookUnit()
@@ -9,7 +9,7 @@ export default class UsageLifecycle implements ApplicationLifecycle {
   private readonly commands: ParsedCommands;
 
   @Inject()
-  private readonly trigger: CommandTrigger;
+  private readonly program: Program;
 
   @LifecycleHook()
   async configDidLoad() {
@@ -26,6 +26,6 @@ export default class UsageLifecycle implements ApplicationLifecycle {
       };
     });
 
-    this.trigger.use(interceptor);
+    this.program.use(interceptor);
   }
 }
