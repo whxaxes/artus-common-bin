@@ -14,6 +14,7 @@ export interface CommonDecoratorOption {
 }
 
 export interface MiddlewareDecoratorOption extends CommonDecoratorOption {
+  /** default is after */
   mergeType?: 'before' | 'after'
 }
 
