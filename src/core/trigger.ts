@@ -32,6 +32,14 @@ export class CommandTrigger extends Trigger {
     await this.execute();
   }
 
+  async init() {
+    this.use(async (ctx: CommandContext, next) => {
+      // parse argv and match command
+      await ctx.init();
+      await next();
+    });
+  }
+
   /** override artus context */
   async initContext(input?: CommandInput, output?: Output): Promise<Context> {
     const baseCtx = await super.initContext(input, output);
@@ -40,7 +48,6 @@ export class CommandTrigger extends Trigger {
     cmdCtx.container.set({ id: CommandContext, value: cmdCtx });
     cmdCtx.input = baseCtx.input as CommandInput;
     cmdCtx.output = baseCtx.output;
-    cmdCtx.init();
     return cmdCtx;
   }
 
