@@ -19,11 +19,11 @@ export class Helper {
   private readonly commands: ParsedCommands;
 
   /** executing other command in same pipeline */
-  async forward<T extends Record<string, any> = Record<string, any>>(clz: typeof Command, extraArgs?: T) {
+  async forward<T extends Record<string, any> = Record<string, any>>(clz: typeof Command, args?: T) {
     const cmd = this.commands.getCommand(clz);
     assert(cmd, format('Can not forward to command %s', clz.name));
     const instance = this.ctx.container.get(cmd.clz);
-    if (extraArgs) instance[cmd.optionsKey] = Object.assign(instance[cmd.optionsKey], extraArgs);
+    if (args) instance[cmd.optionsKey] = args;
     return instance[EXCUTION_SYMBOL]();
   }
 
