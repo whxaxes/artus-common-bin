@@ -5,6 +5,7 @@
 import { Inject, Injectable, ScopeEnum } from '@artus/core';
 import { MiddlewareInput } from '@artus/pipeline';
 import { CommandTrigger } from './trigger';
+import { OptionProps } from '../types';
 import { Command } from '../proto/Command';
 import { Middleware, MiddlewareDecoratorOption } from './decorators';
 import { ParsedCommand, ParsedCommands } from '../proto/ParsedCommands';
@@ -27,9 +28,10 @@ export class Program {
     return this.parsedCommands.root;
   }
 
-  /** add options */
-  addOption() {
-
+  /** add options, works in all command by default */
+  option(opt: Record<string, OptionProps>, effectCommands?: ParsedCommand[]) {
+    effectCommands = effectCommands || Array.from(this.commands.values());
+    effectCommands.forEach(c => c.updateGlobalOptions(opt));
   }
 
   /** register pipeline middleware */

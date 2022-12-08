@@ -9,15 +9,14 @@ export default class UsageLifecycle implements ApplicationLifecycle {
 
   @LifecycleHook()
   async configDidLoad() {
-    this.program.commands.forEach(command => (
-      command.updateOptions({
-        help: {
-          type: 'boolean',
-          description: 'Show Help',
-          alias: 'h',
-        },
-      })
-    ));
+    // add global options
+    this.program.option({
+      help: {
+        type: 'boolean',
+        description: 'Show Help',
+        alias: 'h',
+      },
+    });
 
     this.program.use(async (ctx: CommandContext, next) => {
       const { fuzzyMatched, matched, args, bin, raw } = ctx;

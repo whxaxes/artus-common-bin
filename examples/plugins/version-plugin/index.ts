@@ -11,13 +11,13 @@ export default class VersionLifecycle implements ApplicationLifecycle {
   @LifecycleHook()
   async configDidLoad() {
     const { rootCommand } = this.program;
-    rootCommand.updateOptions({
+    this.program.option({
       version: {
         type: 'boolean',
         alias: 'v',
         description: 'Show Version',
       },
-    });
+    }, [ rootCommand ]);
 
     // intercept root command and show version
     this.program.useInCommand(rootCommand, async (ctx: CommandContext, next) => {

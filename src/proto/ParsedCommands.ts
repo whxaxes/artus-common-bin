@@ -7,6 +7,7 @@ import { format } from 'node:util';
 import { isInheritFrom, isNil } from '../utils';
 import { ArtusInjectEnum, Injectable, Container, Inject, ScopeEnum } from '@artus/core';
 const debug = Debug('artus-common-bin#ParsedCommands');
+const OPTION_SYMBOL = Symbol('ParsedCommand#Option');
 
 export interface MatchResult {
   /**
@@ -119,7 +120,8 @@ export class ParsedCommand implements ParsedCommandStruct {
   demanded: Positional[];
   optional: Positional[];
   description: string;
-  options: Record<string, OptionProps>;
+  globalOptions?: Record<string, OptionProps>;
+  baseOptions: Record<string, OptionProps>;
   optionsKey: string;
   childs: ParsedCommand[];
   parent: ParsedCommand;
@@ -133,7 +135,7 @@ export class ParsedCommand implements ParsedCommandStruct {
     this.optional = opt.optional;
     this.override = opt.override;
     const { key, meta } = Reflect.getMetadata(MetadataEnum.OPTION, clz) || {};
-    this.options = meta;
+    this.baseOptions = meta;
     this.optionsKey = key;
     this.childs = [];
     this.parent = null;
@@ -143,6 +145,13 @@ export class ParsedCommand implements ParsedCommandStruct {
         ? opt.alias
         : [ opt.alias ]
       : [];
+  }
+
+  get options() {
+    if (!this[OPTION_SYMBOL]) {
+      this[OPTION_SYMBOL] = { ...this.globalOptions, ...this.baseOptions };
+    }
+    return this[OPTION_SYMBOL];
   }
 
   get isRoot() {
@@ -158,7 +167,13 @@ export class ParsedCommand implements ParsedCommandStruct {
   }
 
   updateOptions(opt: Record<string, OptionProps>) {
-    this.options = Object.assign({}, this.options, opt);
+    this.baseOptions = { ...this.options, ...opt };
+    this[OPTION_SYMBOL] = null;
+  }
+
+  updateGlobalOptions(opt: Record<string, OptionProps>) {
+    this.globalOptions = { ...this.globalOptions, ...opt };
+    this[OPTION_SYMBOL] = null;
   }
 }
 
